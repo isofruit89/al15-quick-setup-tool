@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang='de'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>AL15 Quick-Setup-Tool v{{ app_version }}</title>
+  <link rel='stylesheet' href='{{ url_for("static", filename="style.css") }}?v=40'>
+</head>
+<body>
+  <header class='top-header'>
+    <div class='top-header-inner'>
+      <h1>AL15 Quick-Setup-Tool <span class='app-version'>v{{ app_version }}</span></h1>
+      <div class='top-actions'>
+        <button id='topHomeBtn' class='top-home-btn' type='button' title='Startseite'>🏠 Startseite</button>
+        <button id='langToggleBtn' class='lang-toggle' type='button' title='Switch language'>EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class='home-view' id='homeView'>
+    <div class='home-card-wrap'>
+      <button class='mode-card' id='openCreateBtn' type='button'>
+        <div class='mode-title'>Parametersatz erstellen</div>
+        <div class='mode-subtitle'>Offline-Konfiguration des AL15 und Parametersatz speichern</div>
+      </button>
+      <button class='mode-card' id='openDeployBtn' type='button'>
+        <div class='mode-title'>Parametersatz übertragen</div>
+        <div class='mode-subtitle'>Mit Gerät verbinden, Profil auswählen, Quick Edit, Dry-Run und Konfiguration übernehmen.</div>
+      </button>
+      <button class='mode-card' id='openPalettePackagerBtn' type='button'>
+        <div class='mode-title'>Node-RED Paletten Packager</div>
+        <div class='mode-subtitle'>Offlinefähige TGZ-Pakete einschließlich Runtime-Abhängigkeiten erzeugen.</div>
+      </button>
+      <button class='mode-card' id='openProfileManagerBtn' type='button'>
+        <div class='mode-title'>Profilverwaltung</div>
+        <div class='mode-subtitle'>Profile laden, bearbeiten, kopieren oder löschen.</div>
+      </button>
+    </div>
+  </main>
+
+  <div class='packager-view hidden' id='packagerView'>
+    <div class='page'>
+      <section class='hero card compact-card'><div><button class='back-btn' id='backHome4' type='button'>← Startseite</button><h2 id='packagerTitle'>Node-RED Paletten Packager</h2><p id='packagerInfo'>Erzeugt eine vollständig offlinefähige TGZ-Datei mit Runtime-Abhängigkeiten.</p><p class='internet-warning' id='packagerInternet'>Aktive Internetverbindung erforderlich</p></div></section>
+      <section class='card compact-card'><div class='grid-2 compact-grid'><div class='field-block'><label id='packageNameLabel'>Genauer Name der Palette</label><input id='palettePackageName' placeholder='z. B. node-red-contrib-opcua'></div><div class='field-block'><label id='packageVersionLabel'>Genaue Version</label><input id='palettePackageVersion' placeholder='z. B. 0.2.342'></div></div><div class='actions'><button id='createPalettePackageBtn' class='accent' type='button'>TGZ-Datei erstellen</button></div></section>
+      <section class='card'><h2 id='packageFilesTitle'>Erstellte Paletten im Arbeitsverzeichnis</h2><div id='palettePackageFiles' class='palette-package-list'></div></section>
+      <section class='card status-card compact-card'>
+        <div id='palettePackagerStatus' class='status-box'>Bereit.</div>
+        <div id='paletteProgressWrap' class='palette-progress-wrap hidden'>
+          <div class='palette-progress-head'><span id='paletteProgressLabel'>0/7</span><span id='paletteProgressPercent'>0%</span></div>
+          <progress id='paletteProgress' value='0' max='7'></progress>
+          <pre id='paletteLiveLog' class='palette-live-log'></pre>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class='creator-view hidden' id='creatorView'>
+    <div class='page'>
+      <section class='hero card compact-card'>
+        <div>
+          <button class='back-btn' id='backHome1' type='button'>← Startseite</button>
+          <h2>Neuer Parametersatz</h2>
+          <p>Tragen Sie die Werte abweichend von den Default-Einstellungen ein.</p>
+          <p class='minor-hint'>Hinweis: Kompatibel ab Firmware 1.7</p>
+        </div>
+        <div class='hero-actions'>
+          <button id='previewBtn' type='button'>Technische Vorschau</button>
+          <button id='saveBtn' class='accent' type='button'>Parametersatz speichern</button>
+        </div>
+      </section>
+
+      <section class='card compact-card meta-grid'>
+        <div class='field-row'>
+          <span class='label'>Profilname</span>
+          <input id='profile_name' placeholder='z. B. Kunde_A_Grundsetup'>
+        </div>
+        <div class='secrets-option'>
+          <label class='secrets-toggle'><input type='checkbox' id='exclude_secrets'><span id='excludeSecretsLabel'>Passwörter und Private Key nicht im Profil speichern</span></label>
+          <p id='excludeSecretsHint' class='minor-hint'>Profile werden unverschlüsselt im Ordner „profiles“ abgelegt. Ist die Option aktiv, werden das MQTT-Command-Channel-Passwort und das OPC-UA-Zertifikat mit Private Key nicht gespeichert und nicht übertragen.</p>
+        </div>
+      </section>
+
+      <section class='card compact-card' id='sec_device_tags'>
+        <div class='section-header'>
+          <h2>Device Tags</h2>
+          <span class='hint'>Application Tag Hinweis: Hostname für OPC UA Server</span>
+        </div>
+        <div class='grid-3 compact-grid'>
+          <div class='field-block'><label>Application Tag</label><input id='application_tag' placeholder='z. B. AppTag'></div>
+          <div class='field-block'><label>Function Tag</label><input id='function_tag' placeholder='z. B. FuncTag'></div>
+          <div class='field-block'><label>Location Tag</label><input id='location_tag' placeholder='z. B. LocTag'></div>
+        </div>
+      </section>
+
+      <section class='card compact-card' id='sec_network'>
+        <div class='section-header'><h2>Network</h2></div>
+        <div class='grid-3 compact-grid'>
+          <div class='field-block'><label>Mode</label><select id='network_mode'><option value='' class='opt-noaction'>Keine Aktion</option><option value='dhcp'>dhcp</option><option value='static'>static</option></select></div>
+          <div class='field-block'><label>IP-Adresse</label><input id='network_address' placeholder='192.168.x.x'></div>
+          <div class='field-block'><label>Subnetzmaske</label><input id='network_subnetmask' placeholder='255.255.x.x'></div>
+          <div class='field-block'><label>Gateway</label><input id='network_gateway' placeholder='192.168.x.x'></div>
+          <div class='field-block'><label>DNS Server</label><input id='network_dns' placeholder='192.168.x.x'></div>
+        </div>
+      </section>
+
+      <section class='card compact-card'>
+        <div class='section-header'><h2 id='systemTitle'>System Setting</h2></div>
+        <div class='three-col compact-grid'>
+          <div class='subcard small-card' id='sub_ntp'>
+            <h3>NTP</h3>
+            <div class='field-block'><label>NTP Server</label><input id='ntp_servers' placeholder='192.168.0.8,192.168.0.9'></div>
+            <div class='segmented' data-target='ntp_action'>
+              <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+              <button type='button' class='seg-btn' data-value='start'>Start</button>
+              <button type='button' class='seg-btn' data-value='stop'>Stop</button>
+            </div>
+            <input id='ntp_action' type='hidden' value='none'>
+          </div>
+          <div class='subcard small-card' id='sub_nodered'>
+            <h3>Node-RED</h3>
+            <div class='segmented' data-target='nodered_action'>
+              <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+              <button type='button' class='seg-btn' data-value='start'>Start</button>
+              <button type='button' class='seg-btn' data-value='stop'>Stop</button>
+            </div>
+            <input id='nodered_action' type='hidden' value='none'>
+          </div>
+          <div class='subcard small-card' id='sub_security'>
+            <h3>Credentials</h3>
+            <div class='segmented' data-target='credentials_enabled'>
+              <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+              <button type='button' class='seg-btn' data-value='true'>Ein</button>
+              <button type='button' class='seg-btn' data-value='false'>Aus</button>
+            </div>
+            <input id='credentials_enabled' type='hidden' value='none'>
+          </div>
+        </div>
+      </section>
+
+      <section class='card compact-card'>
+        <div class='section-header'><h2 id='connectionsTitle'>Connections</h2></div>
+        <div class='connections-stack'>
+          <div class='subcard connection-card small-http' id='sub_http'>
+            <h3>HTTP</h3>
+            <div class='segmented' data-target='http_action'>
+              <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+              <button type='button' class='seg-btn' data-value='start'>Start</button>
+              <button type='button' class='seg-btn' data-value='stop'>Stop</button>
+            </div>
+            <input id='http_action' type='hidden' value='none'>
+          </div>
+
+          <div class='subcard connection-card opcua-card' id='sub_opcua'>
+            <h3>OPC UA</h3>
+            <div class='opcua-cert-hint' id='opcuaCertHint'>Bitte das Zertifikat erst nach einmaligen Starten des OPC UA Server in den AL159x laden</div>
+            <div class='opcua-layout'>
+              <div class='opcua-left'>
+                <div class='field-block'><label>Port</label><input id='opcua_port' placeholder='4843'></div>
+                <div class='segmented' data-target='opcua_action'>
+                  <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+                  <button type='button' class='seg-btn' data-value='start'>Start</button>
+                  <button type='button' class='seg-btn' data-value='stop'>Stop</button>
+                </div>
+                <input id='opcua_action' type='hidden' value='none'>
+              </div>
+              <div class='opcua-right'>
+                <div class='field-block opcua-anon'>
+                  <label for='opcua_anonymous'>Anonymous</label>
+                  <select id='opcua_anonymous'><option value='' class='opt-noaction'>Keine Aktion</option><option value='false' class='opt-off'>Aus</option><option value='true' class='opt-on'>Ein</option></select>
+                </div>
+                <div class='profiles-grid neat-security' id='opcua_profiles'>
+                  <label><input type='checkbox' id='prof_basic256'> Basic256Sha256</label>
+                  <label><input type='checkbox' id='prof_aes128'> Aes128Sha256RsaOaep</label>
+                  <label><input type='checkbox' id='prof_aes256'> Aes256Sha256RsaPss</label>
+                  <label><input type='checkbox' id='prof_none'> None</label>
+                </div>
+              </div>
+            </div>
+            <div class='opcua-cert-panel' id='opcua_cert_panel'>
+              <div class='grid-2 compact-grid'>
+                <div class='field-block'><label id='opcuaCertFileLabel'>Zertifikat (.der / .pem / .crt)</label><input type='file' id='opcua_cert_file' accept='.der,.cer,.pem,.crt'></div>
+                <div class='field-block'><label id='opcuaKeyFileLabel'>Private Key (.pfx / .p12, ohne Passwort)</label><input type='file' id='opcua_key_file' accept='.pfx,.p12'></div>
+              </div>
+              <div id='opcuaCertList' class='iodd-list'></div>
+            </div>
+          </div>
+
+          <div class='subcard connection-card mqtt-card' id='sub_mqtt_client'>
+            <h3>MQTT Client</h3>
+            <div class='grid-3 compact-grid'>
+              <div class='field-block'><label>QoS</label><select id='mqtt_qos'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = QoS0</option><option value='1'>1 = QoS1</option><option value='2'>2 = QoS2</option></select></div>
+              <div class='field-block'><label>Client ID</label><input id='mqtt_clientid' placeholder='z. B. ClientIDAL15'></div>
+              <div class='field-block'><label>Validate Server Certificate</label><select id='mqtt_validate'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = none</option><option value='1'>1 = required</option><option value='2'>2 = required_no_ca</option></select></div>
+            </div>
+            <div class='segmented' data-target='mqtt_action'>
+              <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+              <button type='button' class='seg-btn' data-value='start'>Start</button>
+              <button type='button' class='seg-btn' data-value='stop'>Stop</button>
+            </div>
+            <input id='mqtt_action' type='hidden' value='none'>
+            <div class='mqtt-cert-panel'>
+              <div class='field-block'>
+                <label for='mqtt_certs'>Trusted Server Certificates</label>
+                <textarea id='mqtt_certs' rows='10' spellcheck='false' placeholder='-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----&#10;&#10;-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----'></textarea>
+                <div class='cert-help'>
+                  Fügen Sie ein einzelnes PEM-Zertifikat oder eine komplette Zertifikatskette ein.
+                  Das Tool erkennt alle <code>BEGIN/END CERTIFICATE</code>-Blöcke automatisch und sendet diese in der vom Gerät erwarteten Syntax:
+                  <code>newvalue: ["CERT1,\nCERT2"]</code>.
+                </div>
+                <div class='cert-actions'>
+                  <button id='mqttCertValidateBtn' type='button' class='ghost'>Zertifikate prüfen</button>
+                  <button id='mqttCertClearBtn' type='button' class='ghost'>Zertifikate löschen</button>
+                  <span id='mqttCertStatus' class='cert-status'>Keine Zertifikate eingefügt.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class='subcard connection-card mqttcmd-card' id='sub_mqttcc'>
+            <h3>MQTT Command Channel</h3>
+            <div class='grid-3 compact-grid'>
+              <div class='field-block'><label>Broker IP / Hostname</label><input id='mqttcmd_brokerip' placeholder='192.168.x.x'></div>
+              <div class='field-block'><label>Broker Port</label><input id='mqttcmd_brokerport' placeholder='1883'></div>
+              <div class='field-block'><label>QoS</label><select id='mqttcmd_qos'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = QoS0</option><option value='1'>1 = QoS1</option><option value='2'>2 = QoS2</option></select></div>
+              <div class='field-block'><label>Command Topic</label><input id='mqttcmd_cmdtopic' placeholder='optional'></div>
+              <div class='field-block'><label>Response Topic</label><input id='mqttcmd_replytopic' placeholder='optional'></div>
+              <div class='field-block'><label>Client ID</label><input id='mqttcmd_clientid' placeholder='optional'></div>
+              <div class='field-block'><label>Security Mode</label><select id='mqttcmd_secure'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = disabled</option><option value='1'>1 = required</option></select></div>
+              <div class='field-block'><label>Validate Server Certificate</label><select id='mqttcmd_validate'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = none</option><option value='1'>1 = required</option><option value='2'>2 = required_no_ca</option></select></div>
+              <div class='field-block'><label>User</label><input id='mqttcmd_user' placeholder='optional'></div>
+              <div class='field-block'><label>Passwort</label><input id='mqttcmd_password' type='password' autocomplete='new-password' placeholder='optional'></div>
+            </div>
+            <div class='mqttcmd-cert-panel'>
+              <div class='field-block'>
+                <label for='mqttcmd_certs'>Trusted Server Certificates</label>
+                <textarea id='mqttcmd_certs' rows='10' spellcheck='false' placeholder='-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----&#10;&#10;-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----'></textarea>
+                <div class='cert-help'>
+                  Sie können ein einzelnes PEM-Zertifikat oder eine komplette Zertifikatskette für den MQTT Command Channel einfügen.
+                  Echte Zeilenumbrüche und aus JSON kopierte <code>\n</code>-Sequenzen werden unterstützt.
+                  Mehrere Zertifikate werden automatisch im Geräteformat <code>newvalue: ["CERT1,\nCERT2"]</code> übertragen.
+                </div>
+                <div class='cert-actions'>
+                  <button id='mqttCmdCertValidateBtn' type='button' class='ghost'>Zertifikate prüfen</button>
+                  <button id='mqttCmdCertClearBtn' type='button' class='ghost'>Zertifikate löschen</button>
+                  <span id='mqttCmdCertStatus' class='cert-status'>Keine Zertifikate eingefügt.</span>
+                </div>
+              </div>
+            </div>
+            <div class='segmented' data-target='mqttcmd_action'>
+              <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
+              <button type='button' class='seg-btn' data-value='start'>Start</button>
+              <button type='button' class='seg-btn' data-value='stop'>Stop</button>
+            </div>
+            <input id='mqttcmd_action' type='hidden' value='none'>
+          </div>
+        </div>
+      </section>
+
+      <section class='card status-card compact-card'>
+        <div id='createStatus' class='status-box' data-key='ready'>Bereit. Werte eingeben und Parametersatz speichern.</div>
+        <div class='actions bottom-actions'>
+          <button id='saveBtnBottom' class='accent' type='button'>Parametersatz speichern</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class='deploy-view hidden' id='deployView'>
+    <div class='page'>
+      <section class='card deploy-card'>
+        <div class='section-topline'>
+          <button class='back-btn' id='backHome2' type='button'>← Startseite</button>
+          <h2>Parametersatz übertragen</h2>
+        </div>
+        <div class='deploy-help'>
+          Für eine lokale Verbindung und Inbetriebnahme des AL15 schließen Sie den AL15 bitte direkt an Ihren PC/PG an. Bitte stellen Sie den verwendeten Netzwerkadapter auf DHCP. Das Gerät ist unter https://ifm-AL1590-Seriennummer.local erreichbar. Die 12-stellige Seriennummer finden Sie seitlich auf dem Gerät.<br><br>
+          Beispiel SN 000261900178 --&gt; https://ifm-AL1590-000261900178.local<br><br>
+          Alternativ kann das Gerät in eine bestehende IT-Infrastruktur integriert werden und erhält eine DHCP Adresse von einem DHCP-Server. Ihr PC/PG muss Zugang zu dem verwendeten Netzwerk haben. Der Zugriff kann ebenfalls per &quot;https://ifm-AL1590-000261900178.local&quot; erfolgen.
+        </div>
+        <div class='field-row'><span class='label'>Host / IP</span><input id='deployIp' value='{{ default_ip }}' placeholder='https://ifm-AL1590-000261900178.local' autocomplete='url'></div>
+        <div class='field-row'><span class='label'>Benutzer</span><input id='deployUsername' value='admin'></div>
+        <div class='field-row'><span class='label'>Passwort</span><input id='deployPassword' type='password' autocomplete='current-password' value=''></div>
+        <div class='field-row'><span class='label'>Neues Passwort</span><input id='deployNewPassword' type='password' placeholder='optional'></div>
+        <div class='field-row'><span class='label'>Neues Passwort bestätigen</span><input id='deployConfirmNewPassword' type='password' placeholder='optional'></div>
+        <div class='field-row'><span class='label'>Profil</span><select id='deployProfiles'><option value=''>-- Profil wählen --</option></select></div>
+        <section id='deployQuickEdit' class='subcard quick-edit-card hidden'>
+          <h3>Quick Edit für dieses Gerät</h3>
+          <div class='section-header'><h2>Device Tags</h2><span class='hint' id='quickEditHint'>Diese Werte überschreiben nur die Übertragung, nicht das gespeicherte Profil. Es dient lediglich zur schnellen Anpassung und Vervielfältigung auf mehrere AL159x. Bitte ändern Sie keine Werte, wenn das gespeicherte Profil direkt übertragen werden soll.</span></div>
+          <div class='grid-3 compact-grid'>
+            <div class='field-block'><label>Application Tag</label><input id='qe_application_tag'></div>
+            <div class='field-block'><label>Function Tag</label><input id='qe_function_tag'></div>
+            <div class='field-block'><label>Location Tag</label><input id='qe_location_tag'></div>
+          </div>
+          <div class='section-header quick-edit-network-title'><h2>Network</h2></div>
+          <div class='grid-3 compact-grid'>
+            <div class='field-block'><label>Mode</label><select id='qe_network_mode'><option value='' class='opt-noaction'>Keine Aktion</option><option value='dhcp'>dhcp</option><option value='static'>static</option></select></div>
+            <div class='field-block'><label>IP-Adresse</label><input id='qe_network_address' placeholder='192.168.x.x'></div>
+            <div class='field-block'><label>Subnetzmaske</label><input id='qe_network_subnetmask' placeholder='255.255.x.x'></div>
+            <div class='field-block'><label>Gateway</label><input id='qe_network_gateway' placeholder='192.168.x.x'></div>
+            <div class='field-block'><label>DNS Server</label><input id='qe_network_dns' placeholder='192.168.x.x'></div>
+          </div>
+        </section>
+        <div class='actions'>
+          <button id='deployReloadProfilesBtn' type='button'>Profile neu laden</button>
+          <button id='deployConnectBtn' type='button'>Vorprüfung</button>
+          <button id='deployDryRunBtn' type='button'>Dry Run</button>
+          <button id='deployApplyBtn' class='accent' type='button'>Konfiguration übernehmen</button>
+        </div>
+        <div class='minor-hint'>Hinweis: Es kann bis zu 60s dauern. Während der Übertragung wird jeder Request live angezeigt.</div>
+      </section>
+      <section class='card'><h2>Verbindungsstatus</h2><div id='deployConnectionStatus' class='status-box'>Noch keine Vorprüfung durchgeführt.</div></section>
+      <section class='card'><h2>Feedback</h2><div id='deployOutputTableWrap' class='table-wrap'></div></section>
+    </div>
+  </div>
+
+
+  <div class='profile-view hidden' id='profileView'>
+    <div class='page'>
+      <section class='hero card compact-card'>
+        <div>
+          <button class='back-btn' id='backHome3' type='button'>← Startseite</button>
+          <h2>Profilverwaltung</h2>
+          <p>Profile laden, bearbeiten, kopieren oder löschen.</p>
+        </div>
+        <div class='hero-actions'>
+          <button id='profileManagerReloadBtn' type='button'>Profile neu laden</button>
+        </div>
+      </section>
+      <section class='card'>
+        <div class='section-header'><h2>Gespeicherte Profile</h2><span class='hint'>Bearbeiten lädt das Profil in den Editor. Speichern überschreibt bei gleichem Namen das Profil.</span></div>
+        <div id='profileManagerList' class='profile-manager-list'></div>
+      </section>
+      <section class='card status-card compact-card'>
+        <div id='profileManagerStatus' class='status-box'>Bereit.</div>
+      </section>
+    </div>
+  </div>
+
+  <dialog id='previewDialog'>
+    <div class='dialog-head'>
+      <h3>Technische Vorschau</h3>
+      <button id='closePreviewBtn' class='ghost' type='button'>Schließen</button>
+    </div>
+    <div id='previewWrap' class='preview-wrap'></div>
+  </dialog>
+
+  <script>
+    window.DEFAULT_PROFILE = {{ default_profile_json|safe }};
+  </script>
+  <script src='{{ url_for("static", filename="app.js") }}?v=40'></script>
+</body>
+</html>
+

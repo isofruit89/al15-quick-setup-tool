@@ -1,0 +1,1461 @@
+{
+ "default_v1": {
+  "profile": {
+   "name": "v1",
+   "device_tags": {
+    "application_tag": "",
+    "function_tag": "",
+    "location_tag": ""
+   },
+   "port_configuration": {
+    "ports": [
+     {
+      "port": 1,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 2,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 3,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 4,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 5,
+      "pin4": 3
+     },
+     {
+      "port": 6,
+      "pin4": 3
+     },
+     {
+      "port": 7,
+      "pin4": 3
+     },
+     {
+      "port": 8,
+      "pin4": 3
+     }
+    ]
+   },
+   "system_ntp": {
+    "servers": [],
+    "action": "none"
+   },
+   "system_nodered": {
+    "action": "none"
+   },
+   "system_security": {
+    "credentials_enabled": true
+   },
+   "connections_http": {
+    "action": "none"
+   },
+   "connections_opcua": {
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+     {
+      "name": "Basic256Sha256",
+      "enabled": true
+     },
+     {
+      "name": "Aes128Sha256RsaOaep",
+      "enabled": false
+     },
+     {
+      "name": "Aes256Sha256RsaPss",
+      "enabled": false
+     },
+     {
+      "name": "None",
+      "enabled": false
+     }
+    ],
+    "action": "none"
+   },
+   "connections_mqtt_client": {
+    "qos": 0,
+    "clientid": "",
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "action": "none"
+   },
+   "connections_mqtt_command_channel": {
+    "brokerip": "",
+    "brokerport": "",
+    "qos": 0,
+    "cmdtopic": "",
+    "defaultreplytopic": "",
+    "clientid": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "user": "",
+    "password": "",
+    "action": "none"
+   },
+   "network": {
+    "mode": "dhcp",
+    "address": "",
+    "subnetmask": "",
+    "gateway": "",
+    "dns_servers": []
+   },
+   "iodd": {
+    "files": []
+   },
+   "node_red_flows": {
+    "files": []
+   },
+   "node_red_palettes": {
+    "files": []
+   }
+  },
+  "expected": [
+   {
+    "adr": "/iolinkmaster/port[1]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[5]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[6]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[7]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[8]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/stop",
+    "data": null
+   },
+   {
+    "adr": "/connections/opcua_server/settings/setdata",
+    "data": {
+     "value": {
+      "port": 4843,
+      "enable_anonymous": false,
+      "security_profiles": [
+       {
+        "name": "Basic256Sha256",
+        "enabled": true
+       },
+       {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": false
+       },
+       {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": false
+       },
+       {
+        "name": "None",
+        "enabled": false
+       }
+      ]
+     }
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/start",
+    "data": null
+   }
+  ]
+ },
+ "tags_ntp_credentials_off": {
+  "profile": {
+   "name": "v1",
+   "device_tags": {
+    "application_tag": "App",
+    "function_tag": "",
+    "location_tag": "Loc"
+   },
+   "port_configuration": {
+    "ports": [
+     {
+      "port": 1,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 2,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 3,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 4,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 5,
+      "pin4": 3
+     },
+     {
+      "port": 6,
+      "pin4": 3
+     },
+     {
+      "port": 7,
+      "pin4": 3
+     },
+     {
+      "port": 8,
+      "pin4": 3
+     }
+    ]
+   },
+   "system_ntp": {
+    "servers": [
+     "1.2.3.4"
+    ],
+    "action": "start"
+   },
+   "system_nodered": {
+    "action": "none"
+   },
+   "system_security": {
+    "credentials_enabled": false
+   },
+   "connections_http": {
+    "action": "none"
+   },
+   "connections_opcua": {
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+     {
+      "name": "Basic256Sha256",
+      "enabled": true
+     },
+     {
+      "name": "Aes128Sha256RsaOaep",
+      "enabled": false
+     },
+     {
+      "name": "Aes256Sha256RsaPss",
+      "enabled": false
+     },
+     {
+      "name": "None",
+      "enabled": false
+     }
+    ],
+    "action": "none"
+   },
+   "connections_mqtt_client": {
+    "qos": 0,
+    "clientid": "",
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "action": "none"
+   },
+   "connections_mqtt_command_channel": {
+    "brokerip": "",
+    "brokerport": "",
+    "qos": 0,
+    "cmdtopic": "",
+    "defaultreplytopic": "",
+    "clientid": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "user": "",
+    "password": "",
+    "action": "none"
+   },
+   "network": {
+    "mode": "dhcp",
+    "address": "",
+    "subnetmask": "",
+    "gateway": "",
+    "dns_servers": []
+   },
+   "iodd": {
+    "files": []
+   },
+   "node_red_flows": {
+    "files": []
+   },
+   "node_red_palettes": {
+    "files": []
+   }
+  },
+  "expected": [
+   {
+    "adr": "/devicetag/applicationtag/setdata",
+    "data": {
+     "newvalue": "App"
+    }
+   },
+   {
+    "adr": "/devicetag/locationtag/setdata",
+    "data": {
+     "newvalue": "Loc"
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[5]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[6]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[7]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[8]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/application/ntp/settings/serverlist/setdata",
+    "data": {
+     "newvalue": [
+      "1.2.3.4"
+     ]
+    }
+   },
+   {
+    "adr": "/application/ntp/status/start",
+    "data": null
+   },
+   {
+    "adr": "/security/authentication_enabled/setdata",
+    "data": {
+     "newvalue": false
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/stop",
+    "data": null
+   },
+   {
+    "adr": "/connections/opcua_server/settings/setdata",
+    "data": {
+     "value": {
+      "port": 4843,
+      "enable_anonymous": false,
+      "security_profiles": [
+       {
+        "name": "Basic256Sha256",
+        "enabled": true
+       },
+       {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": false
+       },
+       {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": false
+       },
+       {
+        "name": "None",
+        "enabled": false
+       }
+      ]
+     }
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/start",
+    "data": null
+   }
+  ]
+ },
+ "mqtt_and_mqttcc": {
+  "profile": {
+   "name": "v1",
+   "device_tags": {
+    "application_tag": "",
+    "function_tag": "",
+    "location_tag": ""
+   },
+   "port_configuration": {
+    "ports": [
+     {
+      "port": 1,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 2,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 3,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 4,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 5,
+      "pin4": 3
+     },
+     {
+      "port": 6,
+      "pin4": 3
+     },
+     {
+      "port": 7,
+      "pin4": 3
+     },
+     {
+      "port": 8,
+      "pin4": 3
+     }
+    ]
+   },
+   "system_ntp": {
+    "servers": [],
+    "action": "none"
+   },
+   "system_nodered": {
+    "action": "none"
+   },
+   "system_security": {
+    "credentials_enabled": true
+   },
+   "connections_http": {
+    "action": "none"
+   },
+   "connections_opcua": {
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+     {
+      "name": "Basic256Sha256",
+      "enabled": true
+     },
+     {
+      "name": "Aes128Sha256RsaOaep",
+      "enabled": false
+     },
+     {
+      "name": "Aes256Sha256RsaPss",
+      "enabled": false
+     },
+     {
+      "name": "None",
+      "enabled": false
+     }
+    ],
+    "action": "none"
+   },
+   "connections_mqtt_client": {
+    "qos": 1,
+    "clientid": "C1",
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "action": "start"
+   },
+   "connections_mqtt_command_channel": {
+    "brokerip": "10.0.0.1",
+    "brokerport": "1883",
+    "qos": 2,
+    "cmdtopic": "",
+    "defaultreplytopic": "",
+    "clientid": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "user": "u",
+    "password": "p",
+    "action": "none"
+   },
+   "network": {
+    "mode": "dhcp",
+    "address": "",
+    "subnetmask": "",
+    "gateway": "",
+    "dns_servers": []
+   },
+   "iodd": {
+    "files": []
+   },
+   "node_red_flows": {
+    "files": []
+   },
+   "node_red_palettes": {
+    "files": []
+   }
+  },
+  "expected": [
+   {
+    "adr": "/iolinkmaster/port[1]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[5]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[6]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[7]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[8]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/stop",
+    "data": null
+   },
+   {
+    "adr": "/connections/opcua_server/settings/setdata",
+    "data": {
+     "value": {
+      "port": 4843,
+      "enable_anonymous": false,
+      "security_profiles": [
+       {
+        "name": "Basic256Sha256",
+        "enabled": true
+       },
+       {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": false
+       },
+       {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": false
+       },
+       {
+        "name": "None",
+        "enabled": false
+       }
+      ]
+     }
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/start",
+    "data": null
+   },
+   {
+    "adr": "/connections/mqttclient/mqttsetup/qos/setdata",
+    "data": {
+     "newvalue": 1
+    }
+   },
+   {
+    "adr": "/connections/mqttclient/mqttsetup/clientid/setdata",
+    "data": {
+     "newvalue": "C1"
+    }
+   },
+   {
+    "adr": "/connections/mqttclient/status/start",
+    "data": null
+   },
+   {
+    "adr": "/connections/mqttcommandchannel/mqttcmdchannel/mqttcmdchannelsetup/brokerip/setdata",
+    "data": {
+     "newvalue": "10.0.0.1"
+    }
+   },
+   {
+    "adr": "/connections/mqttcommandchannel/mqttcmdchannel/mqttcmdchannelsetup/brokerport/setdata",
+    "data": {
+     "newvalue": 1883
+    }
+   },
+   {
+    "adr": "/connections/mqttcommandchannel/mqttcmdchannel/mqttcmdchannelsetup/qos/setdata",
+    "data": {
+     "newvalue": 2
+    }
+   },
+   {
+    "adr": "/connections/mqttcommandchannel/mqttcmdchannel/mqttcmdchannelsetup/user/setdata",
+    "data": {
+     "newvalue": "u"
+    }
+   },
+   {
+    "adr": "/connections/mqttcommandchannel/mqttcmdchannel/mqttcmdchannelsetup/password/setdata",
+    "data": {
+     "newvalue": "p"
+    }
+   }
+  ]
+ },
+ "static_ip": {
+  "profile": {
+   "name": "v1",
+   "device_tags": {
+    "application_tag": "",
+    "function_tag": "",
+    "location_tag": ""
+   },
+   "port_configuration": {
+    "ports": [
+     {
+      "port": 1,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 2,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 3,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 4,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 5,
+      "pin4": 3
+     },
+     {
+      "port": 6,
+      "pin4": 3
+     },
+     {
+      "port": 7,
+      "pin4": 3
+     },
+     {
+      "port": 8,
+      "pin4": 3
+     }
+    ]
+   },
+   "system_ntp": {
+    "servers": [],
+    "action": "none"
+   },
+   "system_nodered": {
+    "action": "none"
+   },
+   "system_security": {
+    "credentials_enabled": true
+   },
+   "connections_http": {
+    "action": "none"
+   },
+   "connections_opcua": {
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+     {
+      "name": "Basic256Sha256",
+      "enabled": true
+     },
+     {
+      "name": "Aes128Sha256RsaOaep",
+      "enabled": false
+     },
+     {
+      "name": "Aes256Sha256RsaPss",
+      "enabled": false
+     },
+     {
+      "name": "None",
+      "enabled": false
+     }
+    ],
+    "action": "none"
+   },
+   "connections_mqtt_client": {
+    "qos": 0,
+    "clientid": "",
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "action": "none"
+   },
+   "connections_mqtt_command_channel": {
+    "brokerip": "",
+    "brokerport": "",
+    "qos": 0,
+    "cmdtopic": "",
+    "defaultreplytopic": "",
+    "clientid": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "user": "",
+    "password": "",
+    "action": "none"
+   },
+   "network": {
+    "mode": "static",
+    "address": "192.168.0.10",
+    "subnetmask": "255.255.255.0",
+    "gateway": "192.168.0.1",
+    "dns_servers": []
+   },
+   "iodd": {
+    "files": []
+   },
+   "node_red_flows": {
+    "files": []
+   },
+   "node_red_palettes": {
+    "files": []
+   }
+  },
+  "expected": [
+   {
+    "adr": "/iolinkmaster/port[1]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[5]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[6]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[7]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[8]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/stop",
+    "data": null
+   },
+   {
+    "adr": "/connections/opcua_server/settings/setdata",
+    "data": {
+     "value": {
+      "port": 4843,
+      "enable_anonymous": false,
+      "security_profiles": [
+       {
+        "name": "Basic256Sha256",
+        "enabled": true
+       },
+       {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": false
+       },
+       {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": false
+       },
+       {
+        "name": "None",
+        "enabled": false
+       }
+      ]
+     }
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/start",
+    "data": null
+   },
+   {
+    "adr": "/network/br0/ipv4/setnetwork",
+    "data": {
+     "mode": 1,
+     "gateway": "192.168.0.1",
+     "address": [
+      {
+       "Address": "192.168.0.10",
+       "Subnetmask": "255.255.255.0"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "http_legacy_enabled": {
+  "profile": {
+   "name": "v1",
+   "device_tags": {
+    "application_tag": "",
+    "function_tag": "",
+    "location_tag": ""
+   },
+   "port_configuration": {
+    "ports": [
+     {
+      "port": 1,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 2,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 3,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 4,
+      "pin4": 3,
+      "pin2": 0
+     },
+     {
+      "port": 5,
+      "pin4": 3
+     },
+     {
+      "port": 6,
+      "pin4": 3
+     },
+     {
+      "port": 7,
+      "pin4": 3
+     },
+     {
+      "port": 8,
+      "pin4": 3
+     }
+    ]
+   },
+   "system_ntp": {
+    "servers": [],
+    "action": "none"
+   },
+   "system_nodered": {
+    "action": "none"
+   },
+   "system_security": {
+    "credentials_enabled": true
+   },
+   "connections_http": {
+    "action": "",
+    "enabled": true
+   },
+   "connections_opcua": {
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+     {
+      "name": "Basic256Sha256",
+      "enabled": true
+     },
+     {
+      "name": "Aes128Sha256RsaOaep",
+      "enabled": false
+     },
+     {
+      "name": "Aes256Sha256RsaPss",
+      "enabled": false
+     },
+     {
+      "name": "None",
+      "enabled": false
+     }
+    ],
+    "action": "none"
+   },
+   "connections_mqtt_client": {
+    "qos": 0,
+    "clientid": "",
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "action": "none"
+   },
+   "connections_mqtt_command_channel": {
+    "brokerip": "",
+    "brokerport": "",
+    "qos": 0,
+    "cmdtopic": "",
+    "defaultreplytopic": "",
+    "clientid": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "user": "",
+    "password": "",
+    "action": "none"
+   },
+   "network": {
+    "mode": "dhcp",
+    "address": "",
+    "subnetmask": "",
+    "gateway": "",
+    "dns_servers": []
+   },
+   "iodd": {
+    "files": []
+   },
+   "node_red_flows": {
+    "files": []
+   },
+   "node_red_palettes": {
+    "files": []
+   }
+  },
+  "expected": [
+   {
+    "adr": "/iolinkmaster/port[1]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[5]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[6]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[7]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[8]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/connections/httpserver0/httpserver/allowed_services/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/stop",
+    "data": null
+   },
+   {
+    "adr": "/connections/opcua_server/settings/setdata",
+    "data": {
+     "value": {
+      "port": 4843,
+      "enable_anonymous": false,
+      "security_profiles": [
+       {
+        "name": "Basic256Sha256",
+        "enabled": true
+       },
+       {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": false
+       },
+       {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": false
+       },
+       {
+        "name": "None",
+        "enabled": false
+       }
+      ]
+     }
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/start",
+    "data": null
+   }
+  ]
+ },
+ "ports_partial": {
+  "profile": {
+   "name": "v1",
+   "device_tags": {
+    "application_tag": "",
+    "function_tag": "",
+    "location_tag": ""
+   },
+   "port_configuration": {
+    "ports": [
+     {
+      "port": 2,
+      "pin4": 1,
+      "pin2": 2
+     }
+    ]
+   },
+   "system_ntp": {
+    "servers": [],
+    "action": "none"
+   },
+   "system_nodered": {
+    "action": "none"
+   },
+   "system_security": {
+    "credentials_enabled": true
+   },
+   "connections_http": {
+    "action": "none"
+   },
+   "connections_opcua": {
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+     {
+      "name": "Basic256Sha256",
+      "enabled": true
+     },
+     {
+      "name": "Aes128Sha256RsaOaep",
+      "enabled": false
+     },
+     {
+      "name": "Aes256Sha256RsaPss",
+      "enabled": false
+     },
+     {
+      "name": "None",
+      "enabled": false
+     }
+    ],
+    "action": "none"
+   },
+   "connections_mqtt_client": {
+    "qos": 0,
+    "clientid": "",
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "action": "none"
+   },
+   "connections_mqtt_command_channel": {
+    "brokerip": "",
+    "brokerport": "",
+    "qos": 0,
+    "cmdtopic": "",
+    "defaultreplytopic": "",
+    "clientid": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": [],
+    "user": "",
+    "password": "",
+    "action": "none"
+   },
+   "network": {
+    "mode": "dhcp",
+    "address": "",
+    "subnetmask": "",
+    "gateway": "",
+    "dns_servers": []
+   },
+   "iodd": {
+    "files": []
+   },
+   "node_red_flows": {
+    "files": []
+   },
+   "node_red_palettes": {
+    "files": []
+   }
+  },
+  "expected": [
+   {
+    "adr": "/iolinkmaster/port[1]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[1]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/mode/setdata",
+    "data": {
+     "newvalue": 1
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[2]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 2
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[3]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[4]/powercontrol/mode_ua/setdata",
+    "data": {
+     "newvalue": 0
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[5]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[6]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[7]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/iolinkmaster/port[8]/mode/setdata",
+    "data": {
+     "newvalue": 3
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/stop",
+    "data": null
+   },
+   {
+    "adr": "/connections/opcua_server/settings/setdata",
+    "data": {
+     "value": {
+      "port": 4843,
+      "enable_anonymous": false,
+      "security_profiles": [
+       {
+        "name": "Basic256Sha256",
+        "enabled": true
+       },
+       {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": false
+       },
+       {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": false
+       },
+       {
+        "name": "None",
+        "enabled": false
+       }
+      ]
+     }
+    }
+   },
+   {
+    "adr": "/connections/opcua_server/status/start",
+    "data": null
+   }
+  ]
+ }
+}

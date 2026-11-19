@@ -1,0 +1,19 @@
+﻿{
+    "schemaVersion":  "1.0",
+    "packages":  [
+                     {
+                         "name":  "node-red-contrib-opcua",
+                         "sourceVersion":  "0.2.355",
+                         "artifactVersion":  "0.2.355-al15.2",
+                         "fileName":  "node-red-contrib-opcua-0.2.355-al15.2.tgz",
+                         "manifestFileName":  "node-red-contrib-opcua-0.2.355-al15.2.tgz.manifest.json",
+                         "sha256":  "aa324f9b65a0bc71ee1cc0e6b9d0d16d7335aab12e49202e83f674ab822e14c6",
+                         "strategy":  "prebuilt-runtime-payload-wrapper",
+                         "targetPlatform":  "linux",
+                         "targetArchitecture":  "arm64",
+                         "targetDevice":  "AL15",
+                         "runtimeDependencyCount":  232,
+                         "released":  true
+                     }
+                 ]
+}

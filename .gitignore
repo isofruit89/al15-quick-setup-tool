@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# PyInstaller
+build/
+dist/
+
+# Benutzerdaten des Tools (nicht versionieren)
+profiles/
+exports/
+palettes/
+
+# Lokale Sicherungen und Werkzeuge
+_backup/
+.claude/
+
+# Betriebssystem / Editor
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,0 +1,14 @@
+AL15 Quick-Setup-Tool
+Copyright 2026 M. Wingert
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This software is not an official ifm product. It is not released, supported,
+or maintained by ifm electronic. "ifm" and the ifm logo are trademarks of
+ifm electronic gmbh; their use here does not imply endorsement.
+
+Third-party components bundled in the Windows release (EXE) include
+Python, Flask, Werkzeug, Jinja2, MarkupSafe, itsdangerous, click, blinker,
+requests, urllib3, certifi, idna and charset-normalizer, each under its own
+license. The prebuilt Node-RED palette in prebuilt_palettes/ contains
+node-red-contrib-opcua and its dependencies under their respective licenses.
