@@ -3,12 +3,13 @@ function $(id) {
 }
 
 function showView(name) {
-  ['homeView', 'creatorView', 'deployView', 'profileView', 'packagerView'].forEach(id => $(id)?.classList.add('hidden'));
+  ['homeView', 'creatorView', 'deployView', 'profileView', 'packagerView', 'backupView'].forEach(id => $(id)?.classList.add('hidden'));
   if (name === 'home') $('homeView')?.classList.remove('hidden');
   if (name === 'create') $('creatorView')?.classList.remove('hidden');
   if (name === 'deploy') $('deployView')?.classList.remove('hidden');
   if (name === 'profiles') $('profileView')?.classList.remove('hidden');
   if (name === 'packager') $('packagerView')?.classList.remove('hidden');
+  if (name === 'backup') $('backupView')?.classList.remove('hidden');
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 }
 
@@ -84,9 +85,9 @@ async function readJsonResponse(response) {
 const I18N = {
   de: {
     langButton: 'EN', createTitle: 'Parametersatz erstellen', createSub: 'Offline-Konfiguration des AL15 und Parametersatz speichern', deployHome: 'Parametersatz übertragen', deploySub: 'Mit Gerät verbinden, Profil auswählen, Quick Edit, Dry-Run und Konfiguration übernehmen.', profileManagerHome:'Profilverwaltung', profileManagerSub:'Profile laden, bearbeiten, kopieren oder löschen.', homeButton:'🏠 Startseite',
-    back: '← Startseite', newSet: 'Neuer Parametersatz', newSetInfo: 'Tragen Sie die Werte abweichend von den Default-Einstellungen ein.', fwHint: 'Hinweis: Kompatibel ab Firmware 1.7', preview: 'Technische Vorschau', save: 'Parametersatz speichern', profileName: 'Profilname',
+    back: '← Startseite', newSet: 'Neuer Parametersatz', newSetInfo: 'Die Felder sind mit den Werkseinstellungen vorbelegt. Bereiche, die nicht übertragen werden sollen, stellen Sie auf „Keine Aktion“. Leere Felder und Zertifikatsfelder ohne Datei bleiben am Gerät unverändert.', fwHint: 'Hinweis: Kompatibel ab Firmware 1.7', preview: 'Technische Vorschau', save: 'Parametersatz speichern', profileName: 'Profilname',
     deviceTags: 'Device Tags', appHint: 'Application Tag Hinweis: Hostname für OPC UA Server', network: 'Network', system: 'Systemeinstellungen', connections: 'Connections', noAction: 'Keine Aktion', start: 'Start', stop: 'Stop', on: 'Ein', off: 'Aus',
-    mqttClient:'MQTT Client', mqttCmd:'MQTT Command Channel', checkCerts:'Zertifikate prüfen', clearCerts:'Zertifikate löschen', noCerts:'Keine Zertifikate eingefügt.',
+    mqttClient:'MQTT Client', mqttCmd:'MQTT Command Channel', checkCerts:'Zertifikate prüfen', clearCerts:'Zertifikate löschen', noCerts:'Keine Zertifikate eingefügt. Die Zertifikate am Gerät bleiben unverändert.',
     certHelpClient:'Fügen Sie ein einzelnes PEM-Zertifikat oder eine komplette Zertifikatskette ein. Das Tool erkennt alle <code>BEGIN/END CERTIFICATE</code>-Blöcke automatisch und sendet diese in der vom Gerät erwarteten Syntax: <code>newvalue: ["CERT1,\\nCERT2"]</code>.',
     certHelpCmd:'Sie können ein einzelnes PEM-Zertifikat oder eine komplette Zertifikatskette für den MQTT Command Channel einfügen. Echte Zeilenumbrüche und aus JSON kopierte <code>\\n</code>-Sequenzen werden unterstützt. Mehrere Zertifikate werden automatisch im Geräteformat <code>newvalue: ["CERT1,\\nCERT2"]</code> übertragen.',
     ready:'Bereit. Werte eingeben und Parametersatz speichern.', deployTitle:'Parametersatz übertragen', deployHelp:'Für eine lokale Verbindung und Inbetriebnahme des AL15 schließen Sie den AL15 bitte direkt an Ihren PC/PG an. Bitte stellen Sie den verwendeten Netzwerkadapter auf DHCP. Das Gerät ist unter https://ifm-AL1590-Seriennummer.local erreichbar. Die 12-stellige Seriennummer finden Sie seitlich auf dem Gerät.<br><br>Beispiel SN 000261900178 --&gt; https://ifm-AL1590-000261900178.local<br><br>Alternativ kann das Gerät in eine bestehende IT-Infrastruktur integriert werden und erhält eine DHCP Adresse von einem DHCP-Server. Ihr PC/PG muss Zugang zu dem verwendeten Netzwerk haben. Der Zugriff kann ebenfalls per &quot;https://ifm-AL1590-000261900178.local&quot; erfolgen.',
@@ -95,9 +96,9 @@ const I18N = {
   },
   en: {
     langButton: 'DE', createTitle: 'Create parameter set', createSub: 'Offline configuration of the AL15 and save the parameter set', deployHome: 'Transfer parameter set', deploySub: 'Connect to device, select profile, quick edit, dry run and apply configuration.', profileManagerHome:'Profile management', profileManagerSub:'Load, edit, copy or delete profiles.', homeButton:'🏠 Home',
-    back: '← Home', newSet: 'New parameter set', newSetInfo: 'Enter values that differ from the default settings.', fwHint: 'Note: Compatible from firmware 1.7', preview: 'Technical preview', save: 'Save parameter set', profileName: 'Profile name',
+    back: '← Home', newSet: 'New parameter set', newSetInfo: 'The fields are prefilled with the factory settings. Set areas that should not be transferred to “No action”. Empty fields and certificate fields without a file remain unchanged on the device.', fwHint: 'Note: Compatible from firmware 1.7', preview: 'Technical preview', save: 'Save parameter set', profileName: 'Profile name',
     deviceTags: 'Device Tags', appHint: 'Application Tag note: Hostname for OPC UA Server', network: 'Network', system: 'System Settings', connections: 'Connections', noAction: 'No action', start: 'Start', stop: 'Stop', on: 'On', off: 'Off',
-    mqttClient:'MQTT Client', mqttCmd:'MQTT Command Channel', checkCerts:'Validate certificates', clearCerts:'Clear certificates', noCerts:'No certificates inserted.',
+    mqttClient:'MQTT Client', mqttCmd:'MQTT Command Channel', checkCerts:'Validate certificates', clearCerts:'Clear certificates', noCerts:'No certificates inserted. The certificates on the device remain unchanged.',
     certHelpClient:'Paste a single PEM certificate or a complete certificate chain. The tool automatically detects all <code>BEGIN/END CERTIFICATE</code> blocks and sends them in the syntax expected by the device: <code>newvalue: ["CERT1,\\nCERT2"]</code>.',
     certHelpCmd:'Paste a single PEM certificate or a complete certificate chain for the MQTT Command Channel. Real line breaks and copied JSON <code>\\n</code> sequences are supported. Multiple certificates are automatically transferred in the device format <code>newvalue: ["CERT1,\\nCERT2"]</code>.',
     ready:'Ready. Enter values and save the parameter set.', deployTitle:'Transfer parameter set', deployHelp:'For local connection and commissioning of the AL15, connect the AL15 directly to the PC/PG. Set the used network adapter to DHCP. The device is available at https://ifm-AL1590-serialnumber.local. The 12-digit serial number is printed on the side of the device.<br><br>Example SN 000261900178 --&gt; https://ifm-AL1590-000261900178.local<br><br>Alternatively, the device can be integrated into an existing IT infrastructure and receives a DHCP address from a DHCP server. The PC/PG must have access to the used network. Access is also possible via &quot;https://ifm-AL1590-000261900178.local&quot;.',
@@ -115,9 +116,58 @@ Object.assign(I18N.de, {configure:'Konfigurieren', currentValue:'Ist', targetVal
 Object.assign(I18N.en, {configure:'Configure', currentValue:'Current', targetValue:'Target', planned:'Planned', dryRunReading:'Creating dry run, reading current values from the device...'});
 Object.assign(I18N.de, {precheckRunning:'Vorprüfung läuft...', precheckFailed:'Vorprüfung fehlgeschlagen.', precheckRequired:'Bitte zuerst eine erfolgreiche Vorprüfung durchführen.', precheckInvalidated:'Host oder Zugangsdaten geändert. Bitte Vorprüfung erneut durchführen.', errorStatus:'Fehler'});
 Object.assign(I18N.en, {precheckRunning:'Pre-check running...', precheckFailed:'Pre-check failed.', precheckRequired:'Please run a successful pre-check first.', precheckInvalidated:'Host or credentials changed. Please run the pre-check again.', errorStatus:'Error'});
+Object.assign(I18N.de, {fieldbusTitle:'Feldbus',fieldbusHint:'Umschalten zwischen PROFINET und EtherNet/IP. Der Wechsel dauert am Gerät etwa eine Minute.',hostnameHint:'Leer = Hostname am Gerät unverändert. Die .local-Adresse übernimmt der neue Name nicht sofort.'});
+Object.assign(I18N.en, {fieldbusTitle:'Fieldbus',fieldbusHint:'Switch between PROFINET and EtherNet/IP. The switch takes about one minute on the device.',hostnameHint:'Empty = hostname on the device unchanged. The .local address does not take the new name immediately.'});
 Object.assign(I18N.de, {selectFiles:'Dateien auswählen',noFileSelected:'Keine Datei ausgewählt',selectedFiles:'Dateien ausgewählt',portsTitle:'Portkonfiguration',portsHint:'Pin 4 für Ports 1–8 und Pin 2 für B-Ports 1–4 konfigurieren.',portLabel:'Port',pin4Label:'Pin 4',pin2Label:'Pin 2',pin4Disable:'0 = Deaktiviert',pin4DI:'1 = Digitaler Eingang',pin4DO:'2 = Digitaler Ausgang',pin4IOLink:'3 = IO-Link (Standard)',pin2Off:'0 = Aus (IO-Link Typ-A-Versorgung, Standard)',pin2On:'1 = Ein (IO-Link Typ-B-Versorgung)',pin2DO:'2 = Digitaler Ausgang'});
 Object.assign(I18N.en, {selectFiles:'Select files',noFileSelected:'No file selected',selectedFiles:'files selected',portsTitle:'Port configuration',portsHint:'Configure Pin 4 for ports 1–8 and Pin 2 for B-ports 1–4.',portLabel:'Port',pin4Label:'Pin 4',pin2Label:'Pin 2',pin4Disable:'0 = Disabled',pin4DI:'1 = Digital input',pin4DO:'2 = Digital output',pin4IOLink:'3 = IO-Link (default)',pin2Off:'0 = Off (IO-Link Type A supply, default)',pin2On:'1 = On (IO-Link Type B supply)',pin2DO:'2 = Digital output'});
 
+// HTTPS-Server, MQTT-Erweiterungen und Zertifikatspaare (PEM)
+Object.assign(I18N.de, {httpsHint:'Änderungen am HTTPS-Server werden erst nach einem Neustart des Geräts wirksam (Code 230). Ein hochgeladenes Serverzertifikat liefert das Gerät danach aus, auch bei Security Mode 0. Es lässt sich nicht mehr löschen, nur durch ein anderes ersetzen.',
+  httpsValidateWarn:'Achtung: Mit „1 = require“ akzeptiert der HTTPS-Server nur noch Clients mit vertrauenswürdigem Zertifikat. Auch dieses Tool und der Browser erreichen das Gerät dann nicht mehr über HTTPS, nur noch über HTTP (Port 80).',
+  httpsCertTitle:'Serverzertifikat (benötigt Extended Key Usage „TLS Web Server Authentication“)', clientCertTitle:'Client-Zertifikat',
+  pemCertLabel:'Zertifikat (.pem / .crt)', pemKeyLabel:'Private Key (.pem / .key)', pemPasswordLabel:'Passwort des Keys (nur bei verschlüsseltem Key)',
+  pemInvalidCert:'Die Datei enthält kein PEM-Zertifikat („BEGIN CERTIFICATE“).', pemInvalidKey:'Die Datei enthält keinen PEM-Key („BEGIN … PRIVATE KEY“).',
+  secretHttpsKey:'HTTPS-Zertifikat mit Private Key', secretMqttClientKey:'MQTT-Client-Zertifikat mit Private Key', secretMqttCmdKey:'MQTTCC-Client-Zertifikat mit Private Key',
+  excludeSecretsHint:'Profile werden unverschlüsselt im Ordner „profiles“ abgelegt. Ist die Option aktiv, werden das MQTT-Command-Channel-Passwort sowie alle Zertifikate mit Private Key (OPC UA, HTTPS, MQTT Client, MQTT Command Channel) nicht gespeichert und nicht übertragen.'});
+Object.assign(I18N.en, {httpsHint:'Changes to the HTTPS server take effect only after a device restart (code 230). After that, the device serves an uploaded server certificate, even with security mode 0. It cannot be deleted, only replaced by another one.',
+  httpsValidateWarn:'Caution: with "1 = require" the HTTPS server accepts only clients with a trusted certificate. This tool and the browser can then no longer reach the device via HTTPS, only via HTTP (port 80).',
+  httpsCertTitle:'Server certificate (requires Extended Key Usage "TLS Web Server Authentication")', clientCertTitle:'Client certificate',
+  pemCertLabel:'Certificate (.pem / .crt)', pemKeyLabel:'Private key (.pem / .key)', pemPasswordLabel:'Key password (only for an encrypted key)',
+  pemInvalidCert:'The file contains no PEM certificate ("BEGIN CERTIFICATE").', pemInvalidKey:'The file contains no PEM key ("BEGIN … PRIVATE KEY").',
+  secretHttpsKey:'HTTPS certificate with private key', secretMqttClientKey:'MQTT client certificate with private key', secretMqttCmdKey:'MQTTCC client certificate with private key',
+  excludeSecretsHint:'Profiles are stored unencrypted in the "profiles" folder. If enabled, the MQTT command channel password and all certificates with private key (OPC UA, HTTPS, MQTT client, MQTT command channel) are neither stored nor transferred.'});
+// Service Monitor
+Object.assign(I18N.de, {monitorTitle:'Service Monitor', monitorHint:'Sendet Datenpunkte zyklisch oder bei Änderung per MQTT/MQTTS an einen Broker. Datenpunkte ohne Gerätenamen eintragen, z. B. /devicestatus/temperature/cpu; das Tool setzt beim Übertragen den Namen des Zielgeräts davor.',
+  monitorAdd:'+ Eintrag hinzufügen', monitorEmpty:'Keine Monitor-Einträge.', monitorEntry:'Eintrag', monitorRemove:'Eintrag entfernen',
+  monitorRemoveUnlisted:'Einträge am Gerät entfernen, die nicht im Profil stehen', monitorRemoveUnlistedHint:'Ohne diese Option bleiben vorhandene Einträge am Gerät erhalten. Einträge mit gleicher ID werden ersetzt.',
+  monitorId:'ID (leer = automatisch)', monitorDescription:'Beschreibung', monitorDataPoints:'Datenpunkte (ein Pfad pro Zeile)',
+  monitorSampleInterval:'Sample-Intervall (ms)', monitorNotifyInterval:'Notify-Intervall (ms)', monitorSampleCondition:'Sample-Bedingung (optional, Datenpunkt)',
+  monitorDataChanged:'Nur bei Änderung senden', monitorPersist:'Nach Neustart erhalten', monitorProtocol:'Protokoll', monitorBroker:'Broker (Host/IP)',
+  monitorPort:'Port', monitorTopic:'Topic', monitorUser:'Benutzer', monitorPassword:'Passwort', secretMonitorPassword:'Service-Monitor-Passwörter',
+  excludeSecretsHint:'Profile werden unverschlüsselt im Ordner „profiles“ abgelegt. Ist die Option aktiv, werden das MQTT-Command-Channel-Passwort, die Passwörter der Service-Monitor-Empfänger sowie alle Zertifikate mit Private Key (OPC UA, HTTPS, MQTT Client, MQTT Command Channel) nicht gespeichert und nicht übertragen.'});
+Object.assign(I18N.en, {monitorTitle:'Service monitor', monitorHint:'Sends data points cyclically or on change via MQTT/MQTTS to a broker. Enter data points without the device name, e.g. /devicestatus/temperature/cpu; the tool adds the name of the target device during transfer.',
+  monitorAdd:'+ Add entry', monitorEmpty:'No monitor entries.', monitorEntry:'Entry', monitorRemove:'Remove entry',
+  monitorRemoveUnlisted:'Remove entries on the device that are not in the profile', monitorRemoveUnlistedHint:'Without this option, existing entries on the device are kept. Entries with the same ID are replaced.',
+  monitorId:'ID (empty = automatic)', monitorDescription:'Description', monitorDataPoints:'Data points (one path per line)',
+  monitorSampleInterval:'Sample interval (ms)', monitorNotifyInterval:'Notify interval (ms)', monitorSampleCondition:'Sample condition (optional, data point)',
+  monitorDataChanged:'Send on change only', monitorPersist:'Keep after restart', monitorProtocol:'Protocol', monitorBroker:'Broker (host/IP)',
+  monitorPort:'Port', monitorTopic:'Topic', monitorUser:'User', monitorPassword:'Password', secretMonitorPassword:'service monitor passwords',
+  excludeSecretsHint:'Profiles are stored unencrypted in the "profiles" folder. If enabled, the MQTT command channel password, the passwords of the service monitor recipients and all certificates with private key (OPC UA, HTTPS, MQTT client, MQTT command channel) are neither stored nor transferred.'});
+// Geräte-Backup
+Object.assign(I18N.de, {backupHome:'Geräte-Backup', backupSub:'Einstellungen eines AL159x auslesen und als Profil speichern.', backupTitle:'Geräte-Backup',
+  backupInfo:'Das Tool liest alle Einstellungen, die ein Parametersatz enthalten kann, vom Gerät und speichert sie als Profil. Zusätzlich entsteht eine Rohdatei mit allen gelesenen Werten im Ordner „backups“. Nicht auslesbar sind das MQTT-Command-Channel-Passwort, der OPC-UA-Private-Key, IODD-Dateien und Node-RED-Paletten.',
+  backupPasswordHint:'Ist die Anmeldung am Gerät deaktiviert, bleibt das Passwort leer.', backupIncludeFlows:'Node-RED-Flows mitsichern', backupCreate:'Backup erstellen',
+  backupNamePlaceholder:'backup_Seriennummer_Datum', backupRestoreHint:'Wiederherstellen: Das Backup-Profil unter „Parametersatz übertragen“ auswählen. Das Tool sendet dann nur die Werte, die vom Gerät abweichen.',
+  backupStatusTitle:'Status', backupResultTitle:'Ergebnis', backupNoResult:'Noch kein Backup erstellt.', backupRunning:'Backup läuft...', backupFailed:'Backup fehlgeschlagen.',
+  backupCancelled:'Backup abgebrochen.', backupStreamEnded:'Die Statusübertragung wurde unerwartet beendet.', backupOpenEditor:'Im Editor öffnen', backupDownloadProfile:'Profil herunterladen',
+  backupDownloadRaw:'Rohdaten herunterladen', backupPrecheckRequired:'Bitte zuerst eine erfolgreiche Vorprüfung durchführen.'});
+Object.assign(I18N.en, {backupHome:'Device backup', backupSub:'Read the settings of an AL159x and save them as a profile.', backupTitle:'Device backup',
+  backupInfo:'The tool reads all settings a parameter set can contain from the device and saves them as a profile. In addition, a raw file with all values read is created in the "backups" folder. The MQTT command channel password, the OPC UA private key, IODD files and Node-RED palettes cannot be read.',
+  backupPasswordHint:'If login is disabled on the device, leave the password empty.', backupIncludeFlows:'Include Node-RED flows', backupCreate:'Create backup',
+  backupNamePlaceholder:'backup_serialnumber_date', backupRestoreHint:'Restore: select the backup profile under "Transfer parameter set". The tool then sends only the values that differ from the device.',
+  backupStatusTitle:'Status', backupResultTitle:'Result', backupNoResult:'No backup created yet.', backupRunning:'Backup running...', backupFailed:'Backup failed.',
+  backupCancelled:'Backup cancelled.', backupStreamEnded:'The status stream ended unexpectedly.', backupOpenEditor:'Open in editor', backupDownloadProfile:'Download profile',
+  backupDownloadRaw:'Download raw data', backupPrecheckRequired:'Please run a successful pre-check first.'});
 let IODD_FILES = [];
 function bytesLabel(n){ if(n<1024)return `${n} B`; if(n<1048576)return `${(n/1024).toFixed(1)} KB`; return `${(n/1048576).toFixed(1)} MB`; }
 function ensureIoddUi(){
@@ -346,21 +396,21 @@ function enhanceFileInput(inputId, labelId) {
 function updateFileSelectionLabels(){const entries=[['ioddFileSelection',IODD_FILES.length],['flowFileSelection',FLOW_FILES.length],['paletteFileSelection',PALETTE_FILES.length]];for(const [id,count] of entries){const el=$(id);if(el)el.textContent=count?`${count} ${t('selectedFiles')}`:t('noFileSelected');}}
 function enhanceAllFileInputs(){enhanceFileInput('iodd_files','ioddFileSelection');enhanceFileInput('flow_files','flowFileSelection');enhanceFileInput('palette_files','paletteFileSelection');updateFileSelectionLabels();}
 function ensurePortConfigurationUi(){if($('portConfigurationSection'))return;const anchor=$('paletteSection');if(!anchor)return;const section=document.createElement('section');section.className='card compact-card';section.id='portConfigurationSection';section.innerHTML=`<div class="section-header"><h2></h2><span class="hint"></span></div><div id="portConfigurationGrid" class="port-config-grid"></div>`;anchor.after(section);renderPortConfiguration();}
-function portSelect(id,options,value){return `<select id="${id}"><option value="" class="opt-noaction"${String(value??'')===''?' selected':''}>${t('noAction')}</option>${options.map(([v,k])=>`<option value="${v}"${String(value)===String(v)?' selected':''}>${t(k)}</option>`).join('')}</select>`;}
-function renderPortConfiguration(){const wrap=$('portConfigurationGrid');if(!wrap)return;const values={};for(let p=1;p<=8;p++)values[p]={pin4:$(`port_${p}_pin4`)?.value??'',pin2:$(`port_${p}_pin2`)?.value??''};wrap.innerHTML='';for(let p=1;p<=8;p++){const card=document.createElement('div');card.className='subcard port-config-card';const pin4=portSelect(`port_${p}_pin4`,[['0','pin4Disable'],['1','pin4DI'],['2','pin4DO'],['3','pin4IOLink']],values[p].pin4);const pin2=p<=4?`<div class="field-block"><label>${t('pin2Label')}</label>${portSelect(`port_${p}_pin2`,[['0','pin2Off'],['1','pin2On'],['2','pin2DO']],values[p].pin2)}</div>`:'';card.innerHTML=`<h3>${t('portLabel')} ${p}</h3><div class="field-block"><label>${t('pin4Label')}</label>${pin4}</div>${pin2}`;wrap.appendChild(card);}document.querySelector('#portConfigurationSection h2').textContent=t('portsTitle');document.querySelector('#portConfigurationSection .hint').textContent=t('portsHint');}
+function portSelect(id,options,value){return `<select id="${id}">${options.map(([v,k])=>`<option value="${v}"${String(value)===String(v)?' selected':''}>${t(k)}</option>`).join('')}</select>`;}
+function renderPortConfiguration(){const wrap=$('portConfigurationGrid');if(!wrap)return;const values={};for(let p=1;p<=8;p++)values[p]={pin4:$(`port_${p}_pin4`)?.value??'',pin2:$(`port_${p}_pin2`)?.value??''};wrap.innerHTML='';for(let p=1;p<=8;p++){const card=document.createElement('div');card.className='subcard port-config-card';const pin4=portSelect(`port_${p}_pin4`,[['0','pin4Disable'],['1','pin4DI'],['2','pin4DO'],['3','pin4IOLink']],values[p].pin4);const pin2=p<=4?`<div class="field-block"><label>${t('pin2Label')}</label>${portSelect(`port_${p}_pin2`,[['0','pin2Off'],['1','pin2On'],['2','pin2DO']],values[p].pin2)}</div>`:'';card.innerHTML=`<h3>${t('portLabel')} ${p}</h3><div class="field-block"><label>${t('pin4Label')}</label>${pin4}</div>${pin2}`;wrap.appendChild(card);}for(let p=1;p<=8;p++){$(`port_${p}_pin4`).value=values[p].pin4;if(p<=4)$(`port_${p}_pin2`).value=values[p].pin2;}document.querySelector('#portConfigurationSection h2').textContent=t('portsTitle');document.querySelector('#portConfigurationSection .hint').textContent=t('portsHint');}
 function loadPortConfiguration(profile){const ports=profile?.port_configuration?.ports||[];for(let p=1;p<=8;p++){const item=ports.find(x=>Number(x.port)===p)||{};setSelectParam(`port_${p}_pin4`,item.pin4);if(p<=4)setSelectParam(`port_${p}_pin2`,item.pin2);}}
 function collectPortConfiguration(){return{ports:Array.from({length:8},(_,i)=>{const p=i+1,item={port:p,pin4:getSelectParam(`port_${p}_pin4`)};if(p<=4)item.pin2=getSelectParam(`port_${p}_pin2`);return item;})};}
 let LANG = localStorage.getItem('al15_lang') || 'de';
 const TEXT_EN = {
   'Bereit. Werte eingeben und Parametersatz speichern.':'Ready. Enter values and save the parameter set.', 'Parametersatz wird gespeichert...':'Saving parameter set...', 'Speichern fehlgeschlagen.':'Saving failed.', 'Technische Vorschau wird erstellt...':'Creating technical preview...', 'Vorschau fehlgeschlagen.':'Preview failed.', 'Vorprüfung läuft...':'Pre-check running...', 'Vorprüfung erfolgreich.':'Pre-check successful.', 'Vorprüfung fehlgeschlagen.':'Pre-check failed.', 'Dry Run wird erstellt...':'Creating dry run...', 'Dry Run erfolgreich erstellt.':'Dry run created successfully.', 'Dry Run fehlgeschlagen':'Dry run failed', 'Konfiguration wird übertragen... Live-Feedback aktiv.':'Applying configuration... Live feedback active.', 'Konfiguration abgeschlossen.':'Configuration completed.', 'Konfiguration fehlgeschlagen.':'Configuration failed.', 'Bitte Profil wählen':'Please select a profile', 'Fehler':'Error', 'Vorprüfung':'Pre-check', 'Profil':'Profile', 'Passwort ändern':'Change password', 'MQTT Zertifikate erfolgreich geprüft.':'MQTT certificates validated successfully.', 'MQTT Zertifikate sind ungültig.':'MQTT certificates are invalid.', 'MQTT Zertifikate gelöscht.':'MQTT certificates cleared.', 'MQTT Command Channel Zertifikate erfolgreich geprüft.':'MQTT Command Channel certificates validated successfully.', 'MQTT Command Channel Zertifikate sind ungültig.':'MQTT Command Channel certificates are invalid.', 'MQTT Command Channel Zertifikate gelöscht.':'MQTT Command Channel certificates cleared.', 'MQTT Trusted Server Certificates sind nicht im gültigen PEM-Format.':'MQTT Trusted Server Certificates are not in valid PEM format.'
 };
-const LABEL_EN = {'OPC UA Start (nach Settings)':'OPC UA Start (after settings)','OPC UA Zertifikat':'OPC UA certificate','Credentials ein':'Enable credentials','Credentials aus':'Disable credentials','MQTTCC Passwort':'MQTTCC password','Passwort ändern':'Change password','Vorprüfung':'Pre-check'};
+const LABEL_EN = {'OPC UA Start (nach Settings)':'OPC UA Start (after settings)','OPC UA Zertifikat':'OPC UA certificate','Credentials ein':'Enable credentials','Credentials aus':'Disable credentials','MQTTCC Passwort':'MQTTCC password','HTTPS Zertifikat':'HTTPS certificate','MQTTCC Client-Zertifikat':'MQTTCC client certificate','MQTT Client-Zertifikat':'MQTT client certificate','Service Monitor: nicht enthaltene Einträge entfernen':'Service monitor: remove entries not in the profile','Service Monitor entfernen':'Service monitor remove','Service Monitor (neu':'Service Monitor (new','Passwort ändern':'Change password','Vorprüfung':'Pre-check'};
 function t(k){ return (I18N[LANG] && I18N[LANG][k]) || I18N.de[k] || k; }
 function trText(v){ let s = String(v ?? ''); if (LANG !== 'en') return s; if (TEXT_EN[s]) return TEXT_EN[s]; Object.entries(LABEL_EN).forEach(([de,en]) => { s = s.replaceAll(de,en); }); return s; }
 function isSuccessCode(code, adr = '') {
   const c = String(code ?? '');
   if (c === '200') return true;
-  if (c === '230' && String(adr ?? '') === '/connections/httpserver0/httpserver/allowed_services/setdata') return true;
+  if (c === '230') return true;  // übernommen, wirksam nach Neustart
   return false;
 }
 function setLang(lang){ LANG = lang; localStorage.setItem('al15_lang', LANG); applyTranslations(); }
@@ -369,9 +419,11 @@ function setNodeHtml(sel, val){ const el = document.querySelector(sel); if(el) e
 const LAST_HOST_KEY = 'al15_last_host';
 function rememberHost(host) { try { if (host) localStorage.setItem(LAST_HOST_KEY, host); } catch (_) {} }
 function restoreHost() {
-  const el = $('deployIp');
-  if (!el || el.value) return;
-  try { const last = localStorage.getItem(LAST_HOST_KEY); if (last) el.value = last; } catch (_) {}
+  ['deployIp', 'backupIp'].forEach(id => {
+    const el = $(id);
+    if (!el || el.value) return;
+    try { const last = localStorage.getItem(LAST_HOST_KEY); if (last) el.value = last; } catch (_) {}
+  });
 }
 // Hostname-Regeln (RFC 1123): nur A-Z, a-z, 0-9 und '-', max. 63 Zeichen, nicht mit '-' beginnen/enden.
 function appTagHostnameOk(value) { const v = String(value || ''); return !v || (/^[A-Za-z0-9-]{1,63}$/.test(v) && !v.startsWith('-') && !v.endsWith('-')); }
@@ -462,6 +514,8 @@ function applyTranslations(){
   renderPaletteList();
   enhanceAllFileInputs();
   renderPortConfiguration();
+  setNodeText('#hostnameHint', t('hostnameHint'));
+  setNodeText('#fieldbusTitle', t('fieldbusTitle')); setNodeText('#fieldbusTypeLabel', t('fieldbusTitle')); setNodeText('#fieldbusHint', t('fieldbusHint'));
   ensureClassToggles();
   ensureNoActionToggles();
   translateNoActionControls();
@@ -472,6 +526,9 @@ function applyTranslations(){
   renderOpcuaCert();
   ensureActionLabels(); ensureAppTagWarnings();
   setNodeText('#excludeSecretsLabel', t('excludeSecrets')); setNodeText('#excludeSecretsHint', t('excludeSecretsHint'));
+  translateBackupView();
+  translatePemPairs();
+  translateMonitor();
   refreshProfileManager?.();
 }
 function initSegmented() {
@@ -499,21 +556,20 @@ function setSegmentValue(targetId, value) {
 // ---------------------------------------------------------------------------
 // "Keine Aktion" (Profilschema v2)
 //  - Klasse: Schalter "Konfigurieren | Keine Aktion" je Abschnitt -> section.apply
-//  - Parameter: Checkbox "Keine Aktion" bei Textfeldern, Option "Keine Aktion" bei Auswahllisten
-//    -> Wert null im Profil. Tippen in ein Feld hebt "Keine Aktion" automatisch auf.
+//  - Parameter: leeres Textfeld / keine Auswahl / keine Datei -> Wert null im Profil (nicht schreiben).
+//    Neue Parametersätze sind mit den Werkseinstellungen vorbelegt (FACTORY_PROFILE in profile_schema.py).
+//  - Start/Stop-Aktionen behalten "Keine Aktion" als eigene Wahl.
 // ---------------------------------------------------------------------------
 const CLASS_SECTIONS = {
-  device_tags: 'sec_device_tags', network: 'sec_network', port_configuration: 'portConfigurationSection',
+  device_tags: 'sec_device_tags', hostname: 'sec_hostname', fieldbus_type: 'sec_fieldbus', network: 'sec_network', port_configuration: 'portConfigurationSection',
   system_ntp: 'sub_ntp', system_nodered: 'sub_nodered', system_security: 'sub_security',
-  connections_http: 'sub_http', connections_opcua: 'sub_opcua', connections_mqtt_client: 'sub_mqtt_client',
-  connections_mqtt_command_channel: 'sub_mqttcc', iodd: 'ioddSection', node_red_flows: 'flowSection', node_red_palettes: 'paletteSection'
+  connections_http: 'sub_http', connections_https: 'sub_https', connections_opcua: 'sub_opcua', connections_mqtt_client: 'sub_mqtt_client',
+  connections_mqtt_command_channel: 'sub_mqttcc', service_monitor: 'sec_monitor', iodd: 'ioddSection', node_red_flows: 'flowSection', node_red_palettes: 'paletteSection'
 };
 const CLASS_APPLY = Object.fromEntries(Object.keys(CLASS_SECTIONS).map(k => [k, true]));
-const NOACTION_GROUPS = ['opcua_profiles', 'opcua_cert_panel'];
-const NOACTION_PARAMS = ['application_tag', 'function_tag', 'location_tag', 'ntp_servers', 'opcua_port', 'opcua_profiles', 'opcua_cert_panel',
-  'mqtt_clientid', 'mqtt_certs', 'mqttcmd_brokerip', 'mqttcmd_brokerport', 'mqttcmd_cmdtopic', 'mqttcmd_replytopic',
-  'mqttcmd_clientid', 'mqttcmd_user', 'mqttcmd_password', 'mqttcmd_certs'];
-
+const PEM_PAIR_PREFIXES = ['https', 'mqtt', 'mqttcmd'];
+// Keine Aktion gibt es nur pro Bereich (Klassen-Schalter). Innerhalb eines Bereichs gilt:
+// leeres Feld bzw. keine Datei = Parameter wird nicht geschrieben.
 function ensureClassToggles() {
   Object.entries(CLASS_SECTIONS).forEach(([section, id]) => {
     const box = $(id);
@@ -545,54 +601,27 @@ function setClassApply(section, apply) {
 }
 function getClassApply(section) { return CLASS_APPLY[section] !== false; }
 
-function noActionBox(id) { return document.querySelector(`input.noaction[data-for="${id}"]`); }
-function isNoAction(id) { return !!noActionBox(id)?.checked; }
-function setNoAction(id, on) {
-  const box = noActionBox(id);
-  if (box) box.checked = !!on;
-  const holder = NOACTION_GROUPS.includes(id) ? $(id) : $(id)?.closest('.field-block');
-  holder?.classList.toggle('param-noaction', !!on);
-}
-function ensureNoActionToggles() {
-  NOACTION_PARAMS.forEach(id => {
-    const field = $(id);
-    if (!field || noActionBox(id)) return;
-    const holder = NOACTION_GROUPS.includes(id) ? field : field.closest('.field-block');
-    if (!holder) return;
-    const label = document.createElement('label');
-    label.className = 'noaction-toggle';
-    label.innerHTML = `<input type="checkbox" class="noaction" data-for="${id}"><span></span>`;
-    if (NOACTION_GROUPS.includes(id)) holder.before(label); else holder.appendChild(label);
-    label.querySelector('input').addEventListener('change', e => setNoAction(id, e.target.checked));
-    // Eingabe im Feld bedeutet: Parameter soll geschrieben werden.
-    const clear = () => { if (isNoAction(id)) setNoAction(id, false); };
-    field.addEventListener('input', clear);
-    field.addEventListener('change', e => { if (!e.target.classList.contains('noaction')) clear(); });
-    setNoAction(id, true);
-  });
-  translateNoActionControls();
-}
+function isNoAction() { return false; }
+function setNoAction() {}
+function ensureNoActionToggles() { translateNoActionControls(); }
 function translateNoActionControls() {
   document.querySelectorAll('.class-toggle button[data-apply="true"]').forEach(b => b.textContent = t('configure'));
   document.querySelectorAll('.class-toggle button[data-apply="false"]').forEach(b => b.textContent = t('noAction'));
-  document.querySelectorAll('.noaction-toggle span').forEach(s => s.textContent = t('noAction'));
   document.querySelectorAll('option.opt-noaction').forEach(o => o.textContent = t('noAction'));
   document.querySelectorAll('option.opt-on').forEach(o => o.textContent = t('on'));
   document.querySelectorAll('option.opt-off').forEach(o => o.textContent = t('off'));
 }
-// Textparameter: null = Keine Aktion
+// Textparameter: leeres Feld = null = nicht schreiben
 function setTextParam(id, value, format = v => String(v)) {
   const el = $(id);
   if (!el) return;
-  const none = value === null || value === undefined;
-  el.value = none ? '' : format(value);
-  setNoAction(id, none);
+  el.value = value === null || value === undefined ? '' : format(value);
 }
 function getTextParam(id, parse = v => v) {
-  if (isNoAction(id)) return null;
-  return parse($(id)?.value ?? '');
+  const raw = $(id)?.value ?? '';
+  return String(raw).trim() === '' ? null : parse(raw);
 }
-// Auswahlparameter: Option '' = Keine Aktion
+// Auswahlparameter: keine Auswahl ('') = null (nur Netzwerk-Modus hat noch die Option "Keine Aktion")
 function setSelectParam(id, value) {
   const el = $(id);
   if (el) el.value = value === null || value === undefined ? '' : String(value);
@@ -635,6 +664,132 @@ function collectOpcuaCert() {
   if (!OPCUA_CERT.certificate && !OPCUA_CERT.private_key) return null;
   const strip = f => f ? { name: f.name, size: f.size, content_base64: f.content_base64 } : null;
   return { certificate: strip(OPCUA_CERT.certificate), private_key: strip(OPCUA_CERT.private_key) };
+}
+
+// Zertifikat + Private Key als PEM-Text (HTTPS-Server, MQTT-Client-Zertifikate)
+const PEM_PAIRS = Object.fromEntries(PEM_PAIR_PREFIXES.map(x => [x, { certificate: null, private_key: null }]));
+function readFileAsText(file) { return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(String(r.result || '')); r.onerror = fail; r.readAsText(file); }); }
+async function handlePemFile(event, prefix, slot) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file) return;
+  if (file.size > 65536) { setStatus('createStatus', t('opcuaCertTooLarge'), 'error'); return; }
+  const text = await readFileAsText(file);
+  const ok = slot === 'certificate' ? /-----BEGIN CERTIFICATE-----/.test(text) : /-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(text);
+  if (!ok) { setStatus('createStatus', t(slot === 'certificate' ? 'pemInvalidCert' : 'pemInvalidKey'), 'error'); return; }
+  PEM_PAIRS[prefix][slot] = { name: file.name, size: file.size, pem: text };
+  setNoAction(prefix + '_cert_panel', false);
+  renderPemPair(prefix);
+}
+function renderPemPair(prefix) {
+  const wrap = $(prefix + '_cert_list');
+  if (!wrap) return;
+  const rows = [['certificate', t('opcuaCertFile')], ['private_key', t('opcuaKeyFile')]];
+  wrap.innerHTML = rows.map(([slot, label]) => {
+    const f = PEM_PAIRS[prefix][slot];
+    return `<div class="iodd-row"><div><strong>${escapeHtml(label)}: ${f ? escapeHtml(f.name) : '—'}</strong><span>${f ? bytesLabel(f.size || (f.pem || '').length) : t('opcuaCertMissing')}</span></div>${f ? `<button type="button" class="danger" data-pem-remove="${slot}">${t('remove')}</button>` : ''}</div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-pem-remove]').forEach(b => b.onclick = () => { PEM_PAIRS[prefix][b.dataset.pemRemove] = null; renderPemPair(prefix); });
+}
+function loadPemPair(prefix, value) {
+  PEM_PAIRS[prefix] = { certificate: value?.certificate ? { ...value.certificate } : null, private_key: value?.private_key ? { ...value.private_key } : null };
+  if ($(prefix + '_key_password')) $(prefix + '_key_password').value = value?.password || '';
+  setNoAction(prefix + '_cert_panel', !value);
+  renderPemPair(prefix);
+}
+function collectPemPair(prefix) {
+  if (isNoAction(prefix + '_cert_panel')) return null;
+  const pair = PEM_PAIRS[prefix];
+  if (!pair.certificate && !pair.private_key) return null;
+  const strip = f => f ? { name: f.name, size: f.size, pem: f.pem } : null;
+  return { certificate: strip(pair.certificate), private_key: strip(pair.private_key), password: $(prefix + '_key_password')?.value || null };
+}
+function translatePemPairs() {
+  setNodeText('#httpsHint', t('httpsHint'));
+  setNodeText('#httpsCertTitle', t('httpsCertTitle'));
+  setNodeText('#mqttClientCertTitle', t('clientCertTitle')); setNodeText('#mqttCmdClientCertTitle', t('clientCertTitle'));
+  document.querySelectorAll('.pem-cert-label').forEach(l => l.textContent = t('pemCertLabel'));
+  document.querySelectorAll('.pem-key-label').forEach(l => l.textContent = t('pemKeyLabel'));
+  document.querySelectorAll('.pem-pw-label').forEach(l => l.textContent = t('pemPasswordLabel'));
+  PEM_PAIR_PREFIXES.forEach(x => {
+    enhanceFileInput(x + '_cert_file', x + 'CertFileSelection'); enhanceFileInput(x + '_key_file', x + 'KeyFileSelection');
+    document.querySelectorAll(`#${x}_cert_panel .file-select-btn`).forEach(b => b.textContent = t('selectFile'));
+    renderPemPair(x);
+  });
+  updateHttpsValidateWarning();
+}
+function updateHttpsValidateWarning() {
+  const warn = $('httpsValidateWarn');
+  if (!warn) return;
+  warn.textContent = t('httpsValidateWarn');
+  warn.classList.toggle('hidden', $('https_validate')?.value !== '1');
+}
+
+// Service Monitor: Liste von Einträgen
+let MONITOR_ITEMS = [];
+function monitorField(i, key, label, value, attrs = '') {
+  return `<div class="field-block"><label>${escapeHtml(label)}</label><input data-mon="${key}" data-idx="${i}" value="${escapeHtml(value ?? '')}" ${attrs}></div>`;
+}
+function renderMonitorItems() {
+  const wrap = $('monitorItems');
+  if (!wrap) return;
+  if (!MONITOR_ITEMS.length) { wrap.innerHTML = `<div class="muted">${t('monitorEmpty')}</div>`; return; }
+  wrap.innerHTML = MONITOR_ITEMS.map((it, i) => {
+    const r = it.recipient || {};
+    const scheme = r.scheme || 'mqtt';
+    return `<div class="subcard monitor-item" data-idx="${i}">
+      <div class="monitor-item-head"><strong>${t('monitorEntry')} ${i + 1}${it.id ? ' · ID ' + escapeHtml(it.id) : ''}</strong>
+        <button type="button" class="danger" data-mon-remove="${i}">${t('monitorRemove')}</button></div>
+      <div class="grid-3 compact-grid">
+        ${monitorField(i, 'id', t('monitorId'), it.id, 'inputmode="numeric"')}
+        ${monitorField(i, 'description', t('monitorDescription'), it.description)}
+        ${monitorField(i, 'sample_condition', t('monitorSampleCondition'), it.sample_condition, 'placeholder="/devicestatus/..."')}
+      </div>
+      <div class="field-block"><label>${t('monitorDataPoints')}</label><textarea data-mon="data_points" data-idx="${i}" rows="3" spellcheck="false" placeholder="/devicestatus/temperature/cpu">${escapeHtml((it.data_points || []).join('\n'))}</textarea></div>
+      <div class="grid-3 compact-grid">
+        ${monitorField(i, 'sample_interval', t('monitorSampleInterval'), it.sample_interval ?? 1000, 'inputmode="numeric"')}
+        ${monitorField(i, 'notify_interval', t('monitorNotifyInterval'), it.notify_interval ?? 1000, 'inputmode="numeric"')}
+        <div class="field-block monitor-checks">
+          <label class="secrets-toggle"><input type="checkbox" data-mon="data_changed" data-idx="${i}"${it.data_changed ? ' checked' : ''}><span>${t('monitorDataChanged')}</span></label>
+          <label class="secrets-toggle"><input type="checkbox" data-mon="persist" data-idx="${i}"${it.persist === false ? '' : ' checked'}><span>${t('monitorPersist')}</span></label>
+        </div>
+        <div class="field-block"><label>${t('monitorProtocol')}</label><select data-mon="scheme" data-idx="${i}"><option value="mqtt"${scheme === 'mqtt' ? ' selected' : ''}>mqtt</option><option value="mqtts"${scheme === 'mqtts' ? ' selected' : ''}>mqtts</option></select></div>
+        ${monitorField(i, 'host', t('monitorBroker'), r.host ?? r.raw, 'placeholder="192.168.x.x"')}
+        ${monitorField(i, 'port', t('monitorPort'), r.port, `placeholder="${scheme === 'mqtts' ? 8883 : 1883}" inputmode="numeric"`)}
+        ${monitorField(i, 'topic', t('monitorTopic'), r.topic, 'placeholder="al15/monitor"')}
+        ${monitorField(i, 'user', t('monitorUser'), r.user, 'placeholder="optional" autocomplete="off"')}
+        ${monitorField(i, 'password', t('monitorPassword'), r.password, 'type="password" placeholder="optional" autocomplete="new-password"')}
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-mon-remove]').forEach(b => b.onclick = () => { MONITOR_ITEMS = collectMonitorItems(); MONITOR_ITEMS.splice(Number(b.dataset.monRemove), 1); renderMonitorItems(); });
+}
+function collectMonitorItems() {
+  const wrap = $('monitorItems');
+  if (!wrap || !wrap.querySelector('.monitor-item')) return MONITOR_ITEMS.map(x => JSON.parse(JSON.stringify(x)));
+  return [...wrap.querySelectorAll('.monitor-item')].map(card => {
+    const i = card.dataset.idx;
+    const v = key => card.querySelector(`[data-mon="${key}"][data-idx="${i}"]`);
+    const text = key => (v(key)?.value ?? '').trim();
+    const num = key => text(key) === '' ? null : Number(text(key));
+    const prev = MONITOR_ITEMS[Number(i)] || {};
+    const host = text('host');
+    const keepRaw = prev.recipient?.raw && !prev.recipient?.host && host === prev.recipient.raw;
+    return {
+      id: num('id'), description: text('description') || null, sample_condition: text('sample_condition') || null,
+      data_points: text('data_points').split(/\n|,/).map(x => x.trim()).filter(Boolean),
+      sample_interval: num('sample_interval'), notify_interval: num('notify_interval'),
+      data_changed: !!v('data_changed')?.checked, persist: !!v('persist')?.checked,
+      recipient: keepRaw ? { raw: prev.recipient.raw } : { scheme: v('scheme')?.value || 'mqtt', host, port: num('port'), topic: text('topic'),
+                   user: text('user') || null, password: v('password')?.value || null }
+    };
+  });
+}
+function translateMonitor() {
+  setNodeText('#monitorTitle', t('monitorTitle')); setNodeText('#monitorHint', t('monitorHint'));
+  setNodeText('#monitorAddBtn', t('monitorAdd'));
+  setNodeText('#monitorRemoveUnlistedLabel', t('monitorRemoveUnlisted')); setNodeText('#monitorRemoveUnlistedHint', t('monitorRemoveUnlistedHint'));
+  MONITOR_ITEMS = collectMonitorItems(); renderMonitorItems();
 }
 
 function updateNetworkFields() {
@@ -716,6 +871,8 @@ function loadDefaults() {
   FLOW_FILES=JSON.parse(JSON.stringify(p.node_red_flows?.files||[])); renderFlowList();
   PALETTE_FILES=JSON.parse(JSON.stringify(p.node_red_palettes?.files||[])); renderPaletteList();
   loadPortConfiguration(p);
+  setTextParam('hostname', p.hostname?.hostname);
+  setSelectParam('fieldbus_type', p.fieldbus_type?.type);
 
   if ($('profile_name')) $('profile_name').value = p.name || '';
 
@@ -723,6 +880,10 @@ function loadDefaults() {
   setTextParam('application_tag', tags.application_tag);
   setTextParam('function_tag', tags.function_tag);
   setTextParam('location_tag', tags.location_tag);
+
+  MONITOR_ITEMS = JSON.parse(JSON.stringify(p.service_monitor?.items || []));
+  renderMonitorItems();
+  if ($('monitor_remove_unlisted')) $('monitor_remove_unlisted').checked = !!p.service_monitor?.remove_unlisted;
 
   const net = p.network || {};
   setSelectParam('network_mode', net.mode || null);
@@ -737,7 +898,16 @@ function loadDefaults() {
   setSegmentValue('nodered_action', p.system_nodered?.action || 'none');
   const cred = p.system_security?.credentials_enabled;
   setSegmentValue('credentials_enabled', cred === null || cred === undefined ? 'none' : String(!!cred));
+  setTextParam('http_port', p.connections_http?.port);
   setSegmentValue('http_action', p.connections_http?.action || 'none');
+
+  const https = p.connections_https || {};
+  setTextParam('https_port', https.port);
+  setSelectParam('https_secure', https.secure);
+  setSelectParam('https_validate', https.validate_client_certificate);
+  setTextParam('https_trusted', https.trustedclientcertificates, v => Array.isArray(v) ? v.join('\n') : String(v));
+  loadPemPair('https', https.certificate);
+  updateHttpsValidateWarning();
 
   const opc = p.connections_opcua || {};
   setTextParam('opcua_port', opc.port);
@@ -753,6 +923,12 @@ function loadDefaults() {
   setSegmentValue('opcua_action', opc.action || 'none');
 
   const mq = p.connections_mqtt_client || {};
+  setSelectParam('mqtt_version', mq.version);
+  setTextParam('mqtt_keepalive', mq.keepalive);
+  setTextParam('mqtt_willtopic', mq.willtopic);
+  setTextParam('mqtt_willmessage', mq.willmessage);
+  setSelectParam('mqtt_retain', mq.retain === null || mq.retain === undefined ? null : String(!!mq.retain));
+  loadPemPair('mqtt', mq.client_certificate);
   setSelectParam('mqtt_qos', mq.qos);
   setTextParam('mqtt_clientid', mq.clientid);
   setSelectParam('mqtt_validate', mq.validate_server_certificate);
@@ -763,6 +939,11 @@ function loadDefaults() {
   const cc = p.connections_mqtt_command_channel || {};
   setTextParam('mqttcmd_brokerip', cc.brokerip);
   setTextParam('mqttcmd_brokerport', cc.brokerport);
+  setSelectParam('mqttcmd_version', cc.version);
+  setTextParam('mqttcmd_keepalive', cc.keepalive);
+  setTextParam('mqttcmd_willtopic', cc.willtopic);
+  setTextParam('mqttcmd_willmessage', cc.willmessage);
+  loadPemPair('mqttcmd', cc.client_certificate);
   setSelectParam('mqttcmd_qos', cc.qos);
   setTextParam('mqttcmd_cmdtopic', cc.cmdtopic);
   setTextParam('mqttcmd_replytopic', cc.defaultreplytopic);
@@ -790,6 +971,8 @@ function collectProfile() {
     },
 
     port_configuration: { apply: getClassApply('port_configuration'), ...collectPortConfiguration() },
+    hostname: { apply: getClassApply('hostname'), hostname: getTextParam('hostname') },
+    fieldbus_type: { apply: getClassApply('fieldbus_type'), type: getSelectParam('fieldbus_type') },
 
     system_ntp: {
       apply: getClassApply('system_ntp'),
@@ -801,7 +984,16 @@ function collectProfile() {
 
     system_security: { apply: getClassApply('system_security'), credentials_enabled: cred === 'none' ? null : cred === 'true' },
 
-    connections_http: { apply: getClassApply('connections_http'), action: $('http_action')?.value || 'none' },
+    connections_http: { apply: getClassApply('connections_http'), port: getTextParam('http_port', numberOrNull), action: $('http_action')?.value || 'none' },
+
+    connections_https: {
+      apply: getClassApply('connections_https'),
+      port: getTextParam('https_port', numberOrNull),
+      secure: getSelectParam('https_secure'),
+      certificate: collectPemPair('https'),
+      validate_client_certificate: getSelectParam('https_validate'),
+      trustedclientcertificates: getTextParam('https_trusted', certsOrNull)
+    },
 
     connections_opcua: {
       apply: getClassApply('connections_opcua'),
@@ -819,7 +1011,13 @@ function collectProfile() {
 
     connections_mqtt_client: {
       apply: getClassApply('connections_mqtt_client'),
+      version: getSelectParam('mqtt_version'),
       qos: getSelectParam('mqtt_qos'),
+      keepalive: getTextParam('mqtt_keepalive', numberOrNull),
+      willtopic: getTextParam('mqtt_willtopic'),
+      willmessage: getTextParam('mqtt_willmessage'),
+      retain: getSelectParam('mqtt_retain', v => v === 'true'),
+      client_certificate: collectPemPair('mqtt'),
       clientid: getTextParam('mqtt_clientid'),
       validate_server_certificate: getSelectParam('mqtt_validate'),
       trustedservercertificates: getTextParam('mqtt_certs', certsOrNull),
@@ -830,7 +1028,12 @@ function collectProfile() {
       apply: getClassApply('connections_mqtt_command_channel'),
       brokerip: getTextParam('mqttcmd_brokerip'),
       brokerport: getTextParam('mqttcmd_brokerport', numberOrNull),
+      version: getSelectParam('mqttcmd_version'),
       qos: getSelectParam('mqttcmd_qos'),
+      keepalive: getTextParam('mqttcmd_keepalive', numberOrNull),
+      willtopic: getTextParam('mqttcmd_willtopic'),
+      willmessage: getTextParam('mqttcmd_willmessage'),
+      client_certificate: collectPemPair('mqttcmd'),
       cmdtopic: getTextParam('mqttcmd_cmdtopic'),
       defaultreplytopic: getTextParam('mqttcmd_replytopic'),
       clientid: getTextParam('mqttcmd_clientid'),
@@ -841,6 +1044,8 @@ function collectProfile() {
       password: getTextParam('mqttcmd_password'),
       action: $('mqttcmd_action')?.value || 'none'
     },
+
+    service_monitor: { apply: getClassApply('service_monitor'), items: collectMonitorItems(), remove_unlisted: !!$('monitor_remove_unlisted')?.checked },
 
     iodd: { apply: getClassApply('iodd'), files: JSON.parse(JSON.stringify(IODD_FILES)) },
     node_red_flows: { apply: getClassApply('node_red_flows'), files: JSON.parse(JSON.stringify(FLOW_FILES)) },
@@ -863,6 +1068,15 @@ function stripSecrets(profile, exclude) {
   const ua = profile.connections_opcua || {};
   if (cc.password) { if (exclude) { cc.password = null; removed.push(t('secretMqttPassword')); } else kept.push(t('secretMqttPassword')); }
   if (ua.certificate?.private_key) { if (exclude) { ua.certificate = null; removed.push(t('secretOpcuaKey')); } else kept.push(t('secretOpcuaKey')); }
+  [[profile.connections_https, 'certificate', 'secretHttpsKey'], [profile.connections_mqtt_client, 'client_certificate', 'secretMqttClientKey'],
+   [cc, 'client_certificate', 'secretMqttCmdKey']].forEach(([section, key, label]) => {
+    if (section?.[key]?.private_key) { if (exclude) { section[key] = null; removed.push(t(label)); } else kept.push(t(label)); }
+  });
+  const monitorWithPw = (profile.service_monitor?.items || []).filter(x => x.recipient?.password);
+  if (monitorWithPw.length) {
+    if (exclude) { monitorWithPw.forEach(x => { x.recipient.password = null; }); removed.push(t('secretMonitorPassword')); }
+    else kept.push(t('secretMonitorPassword'));
+  }
   return { removed, kept };
 }
 async function saveProfile() {
@@ -1001,7 +1215,7 @@ function validateOpcUaUi(showStatus = false) {
   const none = $('prof_none');
   if (!anon || !none) return true;
   // Nur prüfbar, wenn die Security Profiles mitgeschrieben werden (sonst: Gerätezustand, ab Phase 3).
-  if (anon.value === 'true' && !isNoAction('opcua_profiles') && !none.checked) {
+  if (anon.value === 'true' && !none.checked) {
     none.checked = true;
     if (showStatus) setStatus('createStatus', t('anonRequiresNone'), 'ok');
   }
@@ -1126,7 +1340,10 @@ function formatValue(v) {
 function statusRowClass(status) {
   return ({ 'OK': 'row-ok', 'Fehler': 'row-error', 'Error': 'row-error', 'Warnung': 'row-warning', 'Warning': 'row-warning',
             'Unverändert': 'row-skipped', 'Unchanged': 'row-skipped', 'Ändern': 'row-change', 'Change': 'row-change',
-            'Schreiben (ohne Vergleich)': 'row-change', 'Write (no comparison)': 'row-change' })[String(status || '')] || '';
+            'Schreiben (ohne Vergleich)': 'row-change', 'Write (no comparison)': 'row-change',
+            'OK (Neustart nötig)': 'row-warning', 'OK (reboot required)': 'row-warning',
+            'Gelesen': 'row-ok', 'Read': 'row-ok', 'Nicht lesbar': 'row-warning', 'Not readable': 'row-warning',
+            'Nicht gesichert': 'row-skipped', 'Not backed up': 'row-skipped' })[String(status || '')] || '';
 }
 function renderDryRunTable(rows) {
   const wrap = $('deployOutputTableWrap');
@@ -1309,6 +1526,129 @@ function renderDeployTable(rows) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Geräte-Backup
+// ---------------------------------------------------------------------------
+let BACKUP_PRECHECK = null;
+let BACKUP_LAST = null;
+const BACKUP_INPUTS = ['backupIp', 'backupUsername', 'backupPassword'];
+
+function translateBackupView() {
+  setNodeText('#openBackupBtn .mode-title', t('backupHome')); setNodeText('#openBackupBtn .mode-subtitle', t('backupSub'));
+  setNodeText('#backupTitle', t('backupTitle')); setNodeText('#backupInfo', t('backupInfo'));
+  setNodeText('#backupUsernameLabel', t('username')); setNodeText('#backupPasswordLabel', t('password'));
+  setNodeText('#backupPasswordHint', t('backupPasswordHint')); setNodeText('#backupNameLabel', t('profileName'));
+  if ($('backupName')) $('backupName').placeholder = t('backupNamePlaceholder');
+  setNodeText('#backupIncludeFlowsLabel', t('backupIncludeFlows'));
+  setNodeText('#backupConnectBtn', t('precheck')); setNodeText('#backupCreateBtn', t('backupCreate'));
+  setNodeText('#backupRestoreHint', t('backupRestoreHint'));
+  setNodeText('#backupStatusTitle', t('backupStatusTitle')); setNodeText('#backupResultTitle', t('backupResultTitle'));
+  setNodeText('#backupOpenEditorBtn', t('backupOpenEditor')); setNodeText('#backupDownloadProfileBtn', t('backupDownloadProfile'));
+  setNodeText('#backupDownloadRawBtn', t('backupDownloadRaw'));
+  const wrap = $('backupTableWrap');
+  if (wrap && !wrap.querySelector('table')) wrap.innerHTML = `<div class="muted">${t('noOutput')}</div>`;
+}
+function backupCredentials() {
+  return { ip: $('backupIp')?.value?.trim() || '', username: $('backupUsername')?.value?.trim() || '', password: $('backupPassword')?.value || '' };
+}
+function updateBackupButton() { if ($('backupCreateBtn')) $('backupCreateBtn').disabled = !BACKUP_PRECHECK; }
+function invalidateBackupPrecheck() {
+  if (!BACKUP_PRECHECK) return;
+  BACKUP_PRECHECK = null;
+  updateBackupButton();
+  setStatus('backupStatus', t('precheckInvalidated'), 'warning');
+}
+function initBackupTable() {
+  const wrap = $('backupTableWrap');
+  if (wrap) wrap.innerHTML = `<table class="data-table"><thead><tr><th>${t('section')}</th><th>${t('status')}</th><th>${t('path')}</th><th>${t('value')}</th></tr></thead><tbody></tbody></table>`;
+}
+function appendBackupRow(row) {
+  const wrap = $('backupTableWrap');
+  if (!wrap) return;
+  if (!wrap.querySelector('tbody')) initBackupTable();
+  const tr = document.createElement('tr');
+  const cls = statusRowClass(row.status);
+  if (cls) tr.classList.add(cls);
+  let value = row.value === undefined || row.value === null ? '' : formatValue(row.value);
+  if (row.reason) value += (value ? '\n' : '') + `(${row.reason})`;
+  tr.innerHTML = `<td>${escapeHtml(row.section || '')}</td><td>${escapeHtml(row.status || '')}</td><td>${escapeHtml(row.path || '')}</td><td><pre>${escapeHtml(value)}</pre></td>`;
+  wrap.querySelector('tbody').appendChild(tr);
+}
+async function backupConnect() {
+  BACKUP_PRECHECK = null; updateBackupButton();
+  $('backupResultActions')?.classList.add('hidden');
+  setStatus('backupStatus', t('precheckRunning'));
+  const creds = backupCredentials();
+  try {
+    const res = await fetch('/backup/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: LANG, ...creds }) });
+    const data = await readJsonResponse(res);
+    const message = data.message || data.error || t('precheckFailed');
+    initBackupTable();
+    (data.precheck?.checks || []).forEach(c => appendBackupRow({ section: t('precheck'), status: c.status, path: c.path, value: c.value }));
+    if (data.ok) {
+      rememberHost(creds.ip);
+      BACKUP_PRECHECK = { ...creds, serial: data.precheck?.identity?.serial || '' };
+      if ($('backupName') && !$('backupName').value.trim()) $('backupName').value = data.default_name || '';
+      setStatus('backupStatus', message, (data.precheck?.warnings || []).length ? 'warning' : 'ok');
+    } else {
+      setStatus('backupStatus', message, 'error');
+    }
+  } catch (e) {
+    setStatus('backupStatus', String(e), 'error');
+  } finally { updateBackupButton(); }
+}
+async function backupCreate(overwrite) {
+  if (!BACKUP_PRECHECK) { setStatus('backupStatus', t('backupPrecheckRequired'), 'error'); return; }
+  if ($('backupCreateBtn')) $('backupCreateBtn').disabled = true;
+  $('backupResultActions')?.classList.add('hidden');
+  BACKUP_LAST = null;
+  initBackupTable();
+  setStatus('backupStatus', t('backupRunning'));
+  const body = { lang: LANG, ...backupCredentials(), expected_serial: BACKUP_PRECHECK.serial, name: $('backupName')?.value?.trim() || '',
+                 include_flows: !!$('backupIncludeFlows')?.checked, overwrite };
+  let done = null;
+  try {
+    const res = await fetch('/backup/create_stream', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok || !res.body) throw new Error((await res.text()) || t('backupFailed'));
+    const reader = res.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
+    const handle = line => {
+      if (!line.trim()) return;
+      const msg = JSON.parse(line);
+      if (msg.type === 'status') setStatus('backupStatus', msg.message);
+      else if (msg.type === 'row') appendBackupRow(msg);
+      else if (msg.type === 'done') done = msg;
+    };
+    while (true) {
+      const { done: end, value } = await reader.read();
+      if (end) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n'); buffer = lines.pop();
+      lines.forEach(handle);
+    }
+    handle(buffer);
+  } catch (e) {
+    setStatus('backupStatus', String(e), 'error');
+    updateBackupButton();
+    return;
+  }
+  if (done && !done.ok && done.exists) {
+    if (confirm(t('profileOverwriteConfirm').replace('{name}', done.name))) { await backupCreate(true); return; }
+    setStatus('backupStatus', t('backupCancelled'));
+  } else if (done && done.ok) {
+    BACKUP_LAST = { name: done.name };
+    setStatus('backupStatus', done.message, done.summary?.not_readable ? 'warning' : 'ok');
+    $('backupResultActions')?.classList.remove('hidden');
+    refreshProfiles?.(); refreshProfileManager?.();
+  } else {
+    setStatus('backupStatus', done?.error || t('backupStreamEnded'), 'error');
+  }
+  updateBackupButton();
+}
+function backupDownload(kind) {
+  if (!BACKUP_LAST) return;
+  window.location.href = `/backup/download/${encodeURIComponent(BACKUP_LAST.name)}?kind=${kind}&lang=${encodeURIComponent(LANG)}`;
+}
+
 async function refreshProfileManager() {
   const wrap = $('profileManagerList');
   if (!wrap) return;
@@ -1394,6 +1734,14 @@ document.addEventListener('DOMContentLoaded', () => {
   $('backHome2')?.addEventListener('click', () => showView('home'));
   $('backHome3')?.addEventListener('click', () => showView('home'));
     $('backHome4')?.addEventListener('click', () => showView('home'));
+  $('backHome5')?.addEventListener('click', () => showView('home'));
+  $('openBackupBtn')?.addEventListener('click', () => showView('backup'));
+  $('backupConnectBtn')?.addEventListener('click', backupConnect);
+  $('backupCreateBtn')?.addEventListener('click', () => backupCreate(false));
+  $('backupOpenEditorBtn')?.addEventListener('click', () => { if (BACKUP_LAST) editManagedProfile(BACKUP_LAST.name); });
+  $('backupDownloadProfileBtn')?.addEventListener('click', () => backupDownload('profile'));
+  $('backupDownloadRawBtn')?.addEventListener('click', () => backupDownload('raw'));
+  BACKUP_INPUTS.forEach(id => $(id)?.addEventListener('input', invalidateBackupPrecheck));
     $('createPalettePackageBtn')?.addEventListener('click', createPalettePackage);
 
   // Create
@@ -1415,6 +1763,18 @@ document.addEventListener('DOMContentLoaded', () => {
   $('network_mode')?.addEventListener('change', updateNetworkFields);
   $('opcua_cert_file')?.addEventListener('change', e => handleOpcuaCertFile(e, 'certificate'));
   $('opcua_key_file')?.addEventListener('change', e => handleOpcuaCertFile(e, 'private_key'));
+  PEM_PAIR_PREFIXES.forEach(x => {
+    $(x + '_cert_file')?.addEventListener('change', e => handlePemFile(e, x, 'certificate'));
+    $(x + '_key_file')?.addEventListener('change', e => handlePemFile(e, x, 'private_key'));
+  });
+  $('https_validate')?.addEventListener('change', updateHttpsValidateWarning);
+  $('monitorAddBtn')?.addEventListener('click', () => {
+    MONITOR_ITEMS = collectMonitorItems();
+    MONITOR_ITEMS.push({ id: null, data_points: [], sample_interval: 1000, notify_interval: 1000, data_changed: false, persist: true,
+                         recipient: { scheme: 'mqtt', host: '', port: null, topic: '', user: null, password: null } });
+    setClassApply('service_monitor', true);
+    renderMonitorItems();
+  });
   $('prof_none')?.addEventListener('change', () => {
     if (!$('prof_none')?.checked && $('opcua_anonymous')?.value === 'true') {
       $('opcua_anonymous').value = 'false';

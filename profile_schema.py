@@ -3,8 +3,9 @@
 Schema v2 ("Keine Aktion"):
 - Jede Parameterklasse (Abschnitt) hat ``apply``: ``False`` bedeutet "Keine Aktion" für die
   ganze Klasse; die eingetragenen Werte bleiben im Profil erhalten, werden aber nicht übertragen.
-- Jeder einzelne Parameter mit dem Wert ``None`` (JSON ``null``) bedeutet "Keine Aktion" für
-  genau diesen Parameter. Jeder andere Wert (auch ``""`` bei Texten) wird geschrieben.
+- Ein einzelner Parameter mit dem Wert ``None`` (JSON ``null``) wird nicht geschrieben. Der Editor
+  erzeugt ``None`` für leere Felder; einen eigenen Schalter pro Parameter gibt es seit 1.8 nicht mehr.
+  Neue Parametersätze starten mit FACTORY_PROFILE (Werkseinstellungen).
 - Start/Stop-Aktionen behalten ``"none"`` als "Keine Aktion".
 
 Profile ohne ``schema_version`` (v1, Tool <= 1.6) werden beim Laden so umgewandelt,
@@ -15,9 +16,9 @@ import copy
 SCHEMA_VERSION = 2
 
 SECTIONS = [
-    "device_tags", "port_configuration", "system_ntp", "system_nodered", "system_security",
-    "connections_http", "connections_opcua", "connections_mqtt_client",
-    "connections_mqtt_command_channel", "network", "iodd", "node_red_flows", "node_red_palettes",
+    "device_tags", "port_configuration", "fieldbus_type", "system_ntp", "system_nodered", "system_security",
+    "connections_http", "connections_https", "connections_opcua", "connections_mqtt_client",
+    "connections_mqtt_command_channel", "service_monitor", "hostname", "network", "iodd", "node_red_flows", "node_red_palettes",
 ]
 FILE_SECTIONS = ("iodd", "node_red_flows", "node_red_palettes")
 
@@ -26,22 +27,64 @@ DEFAULT_PROFILE = {
     "name": "quick_setup_demo",
     "device_tags": {"apply": True, "application_tag": None, "function_tag": None, "location_tag": None},
     "port_configuration": {"apply": True, "ports": [{"port": p, "pin4": None, **({"pin2": None} if p <= 4 else {})} for p in range(1, 9)]},
+    # Feldbus-Umschaltung: type 0 = PROFINET, 2 = EtherNet/IP
+    "fieldbus_type": {"apply": True, "type": None},
     "system_ntp": {"apply": True, "servers": None, "action": "none"},
     "system_nodered": {"apply": True, "action": "none"},
     "system_security": {"apply": True, "credentials_enabled": None},
-    "connections_http": {"apply": True, "action": "none"},
+    "connections_http": {"apply": True, "port": None, "action": "none"},
+    # HTTPS-Server (httpserver1). certificate = {"certificate": {name, pem}, "private_key": {name, pem}, "password"}
+    "connections_https": {"apply": True, "port": None, "secure": None, "certificate": None,
+                          "validate_client_certificate": None, "trustedclientcertificates": None},
     "connections_opcua": {"apply": True, "port": None, "enable_anonymous": None, "security_profiles": None, "certificate": None, "action": "none"},
-    "connections_mqtt_client": {"apply": True, "qos": None, "clientid": None, "validate_server_certificate": None,
-                                "trustedservercertificates": None, "action": "none"},
-    "connections_mqtt_command_channel": {"apply": True, "brokerip": None, "brokerport": None, "qos": None, "cmdtopic": None,
-                                         "defaultreplytopic": None, "clientid": None, "secure": None,
+    "connections_mqtt_client": {"apply": True, "version": None, "qos": None, "clientid": None, "keepalive": None,
+                                "willtopic": None, "willmessage": None, "retain": None, "validate_server_certificate": None,
+                                "trustedservercertificates": None, "client_certificate": None, "action": "none"},
+    "connections_mqtt_command_channel": {"apply": True, "brokerip": None, "brokerport": None, "version": None, "qos": None,
+                                         "keepalive": None, "cmdtopic": None, "defaultreplytopic": None, "clientid": None,
+                                         "willtopic": None, "willmessage": None, "secure": None,
                                          "validate_server_certificate": None, "trustedservercertificates": None,
-                                         "user": None, "password": None, "action": "none"},
+                                         "client_certificate": None, "user": None, "password": None, "action": "none"},
+    # Service Monitor: items = [{id, data_points, sample_interval, notify_interval, data_changed, sample_condition,
+    #   description, persist, recipient: {scheme, host, port, topic, user, password}}]
+    "service_monitor": {"apply": True, "items": [], "remove_unlisted": False},
+    "hostname": {"apply": True, "hostname": None},
     "network": {"apply": True, "mode": None, "address": "", "subnetmask": "", "gateway": "", "dns_servers": []},
     "iodd": {"apply": True, "files": []},
     "node_red_flows": {"apply": True, "files": []},
     "node_red_palettes": {"apply": True, "files": []},
 }
+
+
+# Werkseinstellungen AL1590 FW 1.7.0.2 (am 2026-11-20 nach Werksreset ausgelesen,
+# Profil profiles/werkszustand_AL1590_fw1702.json). Sie dienen nur als Vorbelegung des
+# Editors für einen neuen Parametersatz. DEFAULT_PROFILE bleibt die Basis für das Laden
+# und Ergänzen älterer Profile, damit dort keine Werte dazukommen, die bisher nicht geschrieben wurden.
+# Bewusst nicht vorbelegt:
+# - gerätespezifische Texte (Tags, Client-ID, Broker-IP, Benutzer, Passwort, Will-Topic/-Message): leer = nicht schreiben
+# - Zertifikate: keine Datei = nicht schreiben
+# - Start/Stop-Aktionen: "none", damit laufende Dienste nur auf ausdrücklichen Wunsch gestartet/gestoppt werden
+# - Hostname: gerätespezifisch, leer = nicht schreiben
+# - Network: Modus "Keine Aktion", sonst würde ein statisch adressiertes Gerät auf DHCP umgestellt
+FACTORY_PROFILE = copy.deepcopy(DEFAULT_PROFILE)
+FACTORY_PROFILE["name"] = ""
+FACTORY_PROFILE["port_configuration"]["ports"] = [{"port": p, "pin4": 3, **({"pin2": 0} if p <= 4 else {})} for p in range(1, 9)]
+# Feldbus: Werkswert EtherNet/IP, Bereich aber auf "Keine Aktion" – ein vergessener Bereich soll
+# eine PROFINET-Anlage nicht umschalten (Verbindung zur Steuerung).
+FACTORY_PROFILE["fieldbus_type"].update({"apply": False, "type": 2})
+FACTORY_PROFILE["system_ntp"]["servers"] = ["0.pool.ntp.org", "1.pool.ntp.org", "2.pool.ntp.org"]
+FACTORY_PROFILE["system_security"]["credentials_enabled"] = True
+FACTORY_PROFILE["connections_http"]["port"] = 80
+FACTORY_PROFILE["connections_https"].update({"port": 443, "secure": 0, "validate_client_certificate": 0})
+FACTORY_PROFILE["connections_opcua"].update({
+    "port": 4843, "enable_anonymous": False,
+    "security_profiles": [{"name": "Basic256Sha256", "enabled": True}, {"name": "Aes128Sha256RsaOaep", "enabled": True},
+                          {"name": "Aes256Sha256RsaPss", "enabled": True}, {"name": "None", "enabled": False}]})
+FACTORY_PROFILE["connections_mqtt_client"].update({"version": 1, "qos": 0, "keepalive": 15, "retain": False,
+                                                   "validate_server_certificate": 0})
+FACTORY_PROFILE["connections_mqtt_command_channel"].update({
+    "brokerport": 1883, "version": 1, "qos": 0, "keepalive": 15, "cmdtopic": "iotcore-request",
+    "defaultreplytopic": "iotcore-response", "secure": 0, "validate_server_certificate": 0})
 
 
 def _empty(value):

@@ -1,5 +1,140 @@
 # Änderungen am AL15 Quick-Setup-Tool
 
+## Version 1.8 (2026-11-20)
+
+### Geräte-Backup
+
+- Neue Kachel „Geräte-Backup“ auf der Startseite (englisch „Device backup“).
+- Ablauf:
+  1. Host/IP, Benutzer und Passwort eingeben.
+  2. Vorprüfung durchführen.
+  3. „Backup erstellen“.
+- Das Tool liest alle Einstellungen, die ein Parametersatz enthalten kann. Dazu gehören:
+  - Device Tags und Network
+  - Portkonfiguration (Pin 4 für Port 1–8, Pin 2 für Port 1–4)
+  - NTP, Node-RED, Credentials und HTTP
+  - OPC UA (Port, Anonymous, Security Profiles)
+  - MQTT Client und MQTT Command Channel
+  - optional die Node-RED-Flows
+- Den Zustand der Dienste (`running`/`stopped`) übernimmt das Tool als Aktion „Start“/„Stop“.
+- Ergebnis:
+  - ein normales Profil in `profiles/`, Name vorbelegt mit `backup_<Seriennummer>_<Datum_Uhrzeit>`
+  - eine Rohdatei `backups/<Name>_raw.json` mit allen gelesenen Pfaden, Codes und Werten sowie Geräteidentität und Tool-Version
+  - Beide lassen sich herunterladen, das Profil lässt sich direkt im Editor öffnen.
+- Wiederherstellen: Das Backup-Profil unter „Parametersatz übertragen“ wählen. Durch das Zurücklesen werden nur abweichende Werte gesendet.
+- Network wird gespeichert, steht im Profil aber auf „Keine Aktion“. So wird eine statische IP beim Einspielen auf ein anderes Gerät nicht doppelt vergeben.
+- Nicht auslesbar, im Ergebnis als „Nicht gesichert“ markiert:
+  - MQTTCC-Passwort
+  - OPC-UA-Zertifikat mit Private Key
+  - IODD-Dateien
+  - Node-RED-Paletten (installierte Paletten werden mit Version aufgelistet)
+- Im Werkszustand bricht das Backup mit einem Hinweis ab, weil ohne gesetztes Passwort nichts lesbar ist.
+- Alle Lesepfade und Wertformate wurden am AL1590 (FW 1.7.0.2, 192.168.0.77) verifiziert.
+
+### HTTP-/HTTPS-Server und MQTT
+
+Alle Pfade und Formate wurden am 2026-11-20 am AL1590 (FW 1.7.0.2) geprüft.
+
+- **HTTP-Server:** Den Port (`httpserver0/httpserver/port`) kann man jetzt setzen.
+- **Neue Karte „HTTPS“** (`httpserver1`) mit diesen Einstellungen:
+  - Port
+  - Security Mode (0 = disabled, 1 = enabled)
+  - Validate Client Certificate (0 = none, 1 = require)
+  - Trusted Client Certificates
+  - Serverzertifikat mit Private Key (PEM), optional mit Passwort für einen verschlüsselten Key
+- **Format des Serverzertifikats:**
+  - Request: `setdata` auf `securesetup/certificate_key_pem` mit `{"certificate": PEM, "key": PEM[, "password"]}`
+  - Das Gerät verlangt im Zertifikat die Extended Key Usage „TLS Web Server Authentication“ (OID 1.3.6.1.5.5.7.3.1), sonst antwortet es mit 422. Das Tool prüft das schon vor dem Senden.
+  - Beim Zurücklesen liefert das Gerät nur das Zertifikat, nie den Key. Ist das Zertifikat identisch, überspringt das Tool den Upload.
+  - Ein hochgeladenes Zertifikat lässt sich am Gerät nicht löschen (Code 500), nur ersetzen.
+  - Nach einem Neustart liefert das Gerät das hochgeladene Zertifikat aus, auch bei Security Mode 0 (geprüft am 2026-11-20). Die HTTPS-Karte weist darauf hin.
+- **„Validate Client Certificate = require“:** Damit erreicht weder dieses Tool noch der Browser das Gerät über HTTPS. Die Oberfläche warnt davor, und HTTPS wird erst kurz vor Network übertragen.
+- **Code 230** („übernommen, wirksam nach Neustart“):
+  - zählt jetzt bei allen Requests als Erfolg
+  - wird als „OK (Neustart nötig)“ angezeigt
+  - Die Abschlussmeldung weist auf den nötigen Neustart hin.
+- **MQTT Client:** neu sind Version (V3.1.0/V3.1.1/V5.0.0), Keep Alive, Will Topic, Will Message, Retain und das Client-Zertifikat (PEM).
+- **MQTT Command Channel:** neu sind Version, Keep Alive, Will Topic, Will Message und das Client-Zertifikat (PEM).
+- **Geräte-Backup:**
+  - Es liest alle neuen Werte.
+  - Installierte Zertifikate meldet es als „Nicht gesichert“, weil der Key nicht lesbar ist.
+- **„Passwörter und Private Key nicht im Profil speichern“** gilt jetzt auch für die neuen Zertifikate.
+- **Behobener Fehler:** Bei der Aktion „Keine Aktion“ hat das Tool den HTTP-Port verworfen. Gefunden beim Live-Test.
+- **Neue Tests:** `tests/test_https_mqtt.py`. Die Testzertifikate liegen in `tests/fixtures/https/`.
+
+### Service Monitor
+
+Am 2026-11-20 am AL1590 geprüft.
+
+- **Neuer Abschnitt „Service Monitor“** im Editor mit einer Liste von Einträgen. Je Eintrag gibt es:
+  - ID (leer = vergibt das Gerät)
+  - Beschreibung
+  - Datenpunkte
+  - Sample- und Notify-Intervall
+  - „Nur bei Änderung senden“
+  - „Nach Neustart erhalten“
+  - eine optionale Sample-Bedingung
+  - den Empfänger: mqtt/mqtts, Broker, Port, Topic, Benutzer, Passwort
+- **Datenpunkte stehen im Profil ohne Gerätenamen** (`/devicestatus/...`). Beim Übertragen setzt das Tool den Namen des Zielgeräts davor, so wie die Web-UI die Einträge anlegt. Damit lässt sich ein Profil auf andere Geräte übertragen.
+- **Übertragung:**
+  - `/monitor/add` mit ID ersetzt einen vorhandenen Eintrag.
+  - Das Zurücklesen über `/monitor/getitems` überspringt identische Einträge.
+  - Einträge ohne ID gleicht das Tool über den Inhalt ab, damit wiederholte Übertragungen keine Duplikate erzeugen.
+- **Optionales Entfernen:** „Einträge am Gerät entfernen, die nicht im Profil stehen“ (standardmäßig aus) löscht per `/monitor/remove` nur Einträge, die weder per ID noch per Inhalt im Profil stehen.
+- **Kein Start/Stop:** Den Monitor selbst startet oder stoppt das Tool bewusst nicht.
+- **Geräte-Backup:**
+  - Es übernimmt alle Monitor-Einträge.
+  - Zugangsdaten im Empfänger liefert das Gerät im Klartext. Sie stehen damit unverschlüsselt im Backup-Profil, und die Ergebnistabelle weist darauf hin.
+- **Datenschutz:**
+  - Passwörter der Empfänger sind in Vorschau, Dry Run und Feedback maskiert.
+  - Die Option „Passwörter … nicht im Profil speichern“ entfernt sie beim Speichern.
+- **Beschreibung:** Die description liefert das Gerät nur bei Einträgen mit „Nach Neustart erhalten“ zurück. Fehlt sie beim Zurücklesen, ignoriert das Tool sie beim Vergleich.
+- **Neue Tests:** `tests/test_monitor.py`.
+
+### Editor: Werkseinstellungen statt „Keine Aktion“ pro Feld
+
+- Die Schalter „Keine Aktion“ an einzelnen Feldern sind entfallen. „Keine Aktion“ gibt es nur noch pro Bereich.
+- Innerhalb eines Bereichs gilt: Ein leeres Feld oder ein Zertifikatsbereich ohne Datei wird nicht geschrieben.
+- Ein neuer Parametersatz ist mit den Werkseinstellungen vorbelegt (`FACTORY_PROFILE` in `profile_schema.py`). Ausgelesen am 2026-11-20 an einem AL1590 mit FW 1.7.0.2 direkt nach dem Werksreset. Ein Dry Run gegen dieses Gerät ergab 0 Änderungen und 34 unveränderte Werte.
+- Auswahllisten (Ports, Version, QoS, Security usw.) haben keine Option „Keine Aktion“ mehr. Ausnahme: der Netzwerk-Modus.
+- Bewusst nicht vorbelegt:
+  - Gerätespezifische Texte wie Tags, Client-ID, Broker-IP, Benutzer und Will-Topic.
+  - Start/Stop-Aktionen. Sie bleiben auf „Keine Aktion“, damit laufende Dienste nicht ungewollt gestoppt werden.
+  - Der Netzwerk-Modus.
+- Ein vorhandenes Will-Topic am Gerät lässt sich über ein leeres Feld nicht mehr löschen.
+- Gespeicherte Profile laden unverändert. `null` bedeutet weiterhin „nicht schreiben“, fehlende Felder werden nicht mit Werkswerten ergänzt.
+- Das Werks-Backup liegt als Profil `profiles/werkszustand_AL1590_fw1702.json` bei.
+- **Neue Tests:** `tests/test_factory_profile.py`.
+
+### Feldbus-Umschaltung und Hostname
+
+- **Feldbus** ist ein neuer Bereich: Umschaltung zwischen PROFINET und EtherNet/IP über `/devicesettings/fieldbustype/<Typ>/enable`.
+  - Den aktuellen Typ liest das Tool vorher aus `/devicesettings/fieldbustype/status` (0 = PROFINET, 2 = EtherNet/IP). Ist er schon aktiv, wird nichts gesendet.
+  - Am Gerät dauert der Wechsel etwa 60 Sekunden. Der Aufruf blockiert so lange; das Tool wartet dafür bis zu 180 Sekunden. Ein Neustart ist nicht nötig.
+  - Werkswert ist EtherNet/IP. Bei einem neuen Parametersatz steht der Bereich trotzdem auf „Keine Aktion“, damit ein vergessener Bereich eine PROFINET-Anlage nicht umschaltet.
+  - Das Geräte-Backup sichert den Feldbus-Typ mit.
+- **Hostname** (`/network/br0/hostname`) ist ein eigener Bereich vor Network. Ein leeres Feld lässt den Namen am Gerät unverändert.
+  - Prüfregeln, live am Gerät ermittelt:
+    - höchstens 63 Zeichen aus Buchstaben, Ziffern, Bindestrich und Punkt
+    - Beginn mit einem Buchstaben
+    - kein Bindestrich am Ende eines Abschnitts, kein Punkt am Ende
+  - Der Gerätename in `/getidentity` ändert sich dabei nicht, die Service-Monitor-Datenpunkte bleiben also gültig.
+  - Die .local-Adresse übernimmt den neuen Namen nicht sofort.
+  - Im Geräte-Backup steht der Hostname wie Network auf „Keine Aktion“, damit ein zweites Gerät nicht denselben Namen bekommt.
+- **Live geprüft** am AL1590:
+  - Umschaltung auf PROFINET und zurück auf EtherNet/IP über das Tool: je ca. 65 s, Code 200, der Dry Run danach zeigt 0 Änderungen.
+  - Hostname geändert und wieder zurückgesetzt.
+- **Neue Tests:** `tests/test_fieldbus_hostname.py`.
+
+### Vorprüfung
+
+- Meldet das Gerät `passwordstatus = not_required` (Anmeldung deaktiviert), ist kein Passwort nötig. Das gilt für Backup und Übertragung.
+
+### Wartbarkeit
+
+- Speichern, Kopieren und Backup nutzen die gemeinsame Funktion `write_profile()` in `app.py`.
+- Neue Datei `backup.py`, neue Tests `tests/test_backup.py`. Dazu gehört ein Rundlauf-Test: Ein Backup, das gegen dasselbe Gerät eingespielt wird, ergibt 0 Änderungen.
+
 ## Version 1.7 (2026-11-19)
 
 Basis: Tool v1.6. Geprüft gegen die Gerätebeschreibung `al1590_description.yaml` (rc12) und den GetTree eines AL1590 mit Firmware 1.7.0.2.

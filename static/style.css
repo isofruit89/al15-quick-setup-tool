@@ -64,12 +64,12 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  height:calc(100vh - 68px);
+  min-height:calc(100vh - 68px);
   padding:24px;
 }
 .home-card-wrap{
   display:grid;
-  grid-template-columns:repeat(2,minmax(280px,420px));
+  grid-template-columns:repeat(3,minmax(260px,400px));
   gap:20px;
   align-items:stretch;
 }
@@ -390,6 +390,9 @@ dialog{
   padding:8px;
 }
 
+@media (max-width:1300px){
+  .home-card-wrap{grid-template-columns:repeat(2,minmax(260px,420px))}
+}
 @media (max-width:1020px){
   .home-card-wrap,.meta-grid,.grid-3,.grid-2,.three-col,.opcua-layout{
     grid-template-columns:1fr
@@ -541,13 +544,9 @@ button.danger:hover{background:#a63a3a}
 .section-skipped > :not(.section-header):not(.class-toggle),
 .section-skipped > .section-header > :not(.class-toggle){opacity:.35;pointer-events:none;user-select:none}
 .section-skipped{border-style:dashed}
-.noaction-toggle{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:.82rem;color:var(--muted);cursor:pointer;width:max-content}
-.noaction-toggle input{margin:0}
 .param-noaction input:not(.noaction),.param-noaction select,.param-noaction textarea{opacity:.45}
 .profiles-grid.param-noaction{opacity:.45}
 .opcua-anon select{min-width:120px}
-.field-block label.noaction-toggle,label.noaction-toggle{display:inline-flex;flex-direction:row;white-space:nowrap;font-weight:normal}
-.field-block label.noaction-toggle input{width:auto}
 .field-block.opcua-anon{display:flex;flex-direction:column;align-items:stretch;gap:6px;justify-content:flex-start}
 .field-block.opcua-anon label{margin:0}
 
@@ -573,3 +572,16 @@ button.danger:hover{background:#a63a3a}
 
 /* Versionsnummer im Kopf */
 .app-version{font-size:.55em;font-weight:500;opacity:.7;margin-left:6px}
+
+/* Geräte-Backup */
+#backupView .secrets-toggle{margin:10px 0 4px}
+#backupResultActions{margin-top:12px}
+/* Zertifikatspaare (HTTPS, MQTT-Client-Zertifikate) */
+.pem-pair-panel{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.pem-pair-title{margin:0 0 4px;font-size:.95rem}
+.pem-pair-panel.param-noaction .grid-3,.pem-pair-panel.param-noaction .iodd-list{opacity:.45}
+/* Service Monitor */
+.monitor-items{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.monitor-item-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.monitor-checks{justify-content:center;gap:6px}
+#sec_monitor .secrets-toggle{margin-top:10px}

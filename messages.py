@@ -40,6 +40,47 @@ ERRORS = {
                        "MQTT trusted server certificates must be given in PEM format."),
     "cert_begin": ("Ungültiger Zertifikatsanfang.", "Invalid certificate start."),
     "cert_end": ("Ungültiges Zertifikatsende.", "Invalid certificate end."),
+    "http_port": ("HTTP Port muss zwischen 1 und 65535 liegen.", "HTTP port must be between 1 and 65535."),
+    "https_port": ("HTTPS Port muss zwischen 1 und 65535 liegen.", "HTTPS port must be between 1 and 65535."),
+    "https_secure": ("HTTPS Security muss 0 oder 1 sein.", "HTTPS security must be 0 or 1."),
+    "https_validate": ("HTTPS Validate Client Certificate muss 0 oder 1 sein.", "HTTPS validate client certificate must be 0 or 1."),
+    "https_trusted_pem": ("HTTPS Trusted Client Certificates müssen im PEM-Format angegeben werden.",
+                          "HTTPS trusted client certificates must be given in PEM format."),
+    "https_cert_eku": ("HTTPS Zertifikat: Das Gerät verlangt die Erweiterung Extended Key Usage \"TLS Web Server Authentication\" (OID 1.3.6.1.5.5.7.3.1).",
+                       "HTTPS certificate: the device requires the extension Extended Key Usage \"TLS Web Server Authentication\" (OID 1.3.6.1.5.5.7.3.1)."),
+    "pem_pair_entry": ("{context} Zertifikat: ungültiger Profileintrag.", "{context} certificate: invalid profile entry."),
+    "pem_pair_cert_missing": ("{context}: Zertifikat fehlt. Zertifikat und Private Key werden gemeinsam benötigt.",
+                              "{context}: certificate is missing. Certificate and private key are required together."),
+    "pem_pair_key_missing": ("{context}: Private Key fehlt. Zertifikat und Private Key werden gemeinsam benötigt.",
+                             "{context}: private key is missing. Certificate and private key are required together."),
+    "pem_pair_size": ("{context}: Zertifikats- oder Schlüsseldatei ist größer als 64 KB.", "{context}: certificate or key file exceeds 64 KB."),
+    "pem_pair_cert_invalid": ('{context}: Zertifikat ist keine PEM-Datei mit "BEGIN CERTIFICATE".',
+                              '{context}: certificate is not a PEM file with "BEGIN CERTIFICATE".'),
+    "pem_pair_key_invalid": ('{context}: Private Key ist keine PEM-Datei mit "BEGIN PRIVATE KEY".',
+                             '{context}: private key is not a PEM file with "BEGIN PRIVATE KEY".'),
+    "pem_pair_key_password": ("{context}: Der Private Key ist verschlüsselt. Bitte das Passwort des Keys eingeben.",
+                              "{context}: the private key is encrypted. Please enter the key password."),
+    "monitor_items_list": ("Service Monitor: Einträge müssen eine Liste sein.", "Service monitor: entries must be a list."),
+    "monitor_item": ("Service Monitor {item}: ungültiger Eintrag.", "Service monitor {item}: invalid entry."),
+    "monitor_datapoints": ("Service Monitor {item}: mindestens ein Datenpunkt ist nötig.", "Service monitor {item}: at least one data point is required."),
+    "monitor_interval": ("Service Monitor {item}: Sample- und Notify-Intervall müssen ganze Zahlen ab 1 ms sein.",
+                         "Service monitor {item}: sample and notify interval must be integers of at least 1 ms."),
+    "monitor_recipient": ("Service Monitor {item}: Empfänger fehlt.", "Service monitor {item}: recipient is missing."),
+    "monitor_scheme": ("Service Monitor {item}: Protokoll muss mqtt oder mqtts sein.", "Service monitor {item}: protocol must be mqtt or mqtts."),
+    "monitor_host": ("Service Monitor {item}: Broker (Host/IP) fehlt oder ist ungültig.", "Service monitor {item}: broker (host/IP) is missing or invalid."),
+    "monitor_port": ("Service Monitor {item}: Port muss zwischen 1 und 65535 liegen.", "Service monitor {item}: port must be between 1 and 65535."),
+    "monitor_topic": ("Service Monitor {item}: Topic fehlt.", "Service monitor {item}: topic is missing."),
+    "monitor_credentials": ("Service Monitor {item}: Benutzer und Passwort dürfen kein :, / oder @ enthalten.",
+                            "Service monitor {item}: user and password must not contain :, / or @."),
+    "monitor_id": ("Service Monitor {item}: ID muss eine ganze Zahl ab 1 sein.", "Service monitor {item}: ID must be an integer of at least 1."),
+    "monitor_id_duplicate": ("Service Monitor: ID {id} ist mehrfach vergeben.", "Service monitor: ID {id} is used more than once."),
+    "mqtt_version": ("MQTT Version muss 0, 1 oder 2 sein.", "MQTT version must be 0, 1 or 2."),
+    "mqtt_keepalive": ("MQTT Keep Alive muss zwischen 0 und 65535 Sekunden liegen.", "MQTT keep alive must be between 0 and 65535 seconds."),
+    "fieldbus_type": ("Feldbus: Typ muss 0 (PROFINET) oder 2 (EtherNet/IP) sein.", "Fieldbus: type must be 0 (PROFINET) or 2 (EtherNet/IP)."),
+    "hostname_invalid": ("Hostname „{value}“ ist ungültig. Erlaubt sind bis zu 63 Zeichen aus Buchstaben, Ziffern, Bindestrich und Punkt; "
+                         "er muss mit einem Buchstaben beginnen und darf nicht auf Bindestrich oder Punkt enden.",
+                         "Hostname \"{value}\" is invalid. Up to 63 characters of letters, digits, hyphen and dot are allowed; "
+                         "it must start with a letter and must not end with a hyphen or dot."),
     "ports_list": ("Portkonfiguration: Ports müssen eine Liste sein.", "Port configuration: ports must be a list."),
     "port_pin4": ("Port {port}: Pin 4 muss 0, 1, 2 oder 3 sein.", "Port {port}: Pin 4 must be 0, 1, 2 or 3."),
     "port_pin2": ("Port {port}: Pin 2 muss 0, 1 oder 2 sein.", "Port {port}: Pin 2 must be 0, 1 or 2."),
@@ -252,7 +293,97 @@ BACKEND_I18N = {
 }
 
 BACKEND_I18N["de"]["profile_exists"] = "Ein Profil mit dem Namen {name} existiert bereits."
+BACKEND_I18N["de"]["status_ok_reboot"] = "OK (Neustart nötig)"
+BACKEND_I18N["en"]["status_ok_reboot"] = "OK (reboot required)"
+BACKEND_I18N["de"]["reboot_required"] = "Mindestens eine Änderung (Code 230) wird erst nach einem Neustart des Geräts wirksam."
+BACKEND_I18N["en"]["reboot_required"] = "At least one change (code 230) takes effect only after the device is restarted."
+BACKEND_I18N["de"]["rb_monitor_new"] = "neuer Eintrag"
+BACKEND_I18N["en"]["rb_monitor_new"] = "new entry"
+BACKEND_I18N["de"]["rb_monitor_same_content"] = "Eintrag mit gleichem Inhalt vorhanden"
+BACKEND_I18N["en"]["rb_monitor_same_content"] = "entry with the same content exists"
+BACKEND_I18N["de"]["rb_monitor_nothing_to_remove"] = "keine weiteren Einträge am Gerät"
+BACKEND_I18N["en"]["rb_monitor_nothing_to_remove"] = "no further entries on the device"
+BACKEND_I18N["de"]["rb_cert_key_unchanged"] = "Zertifikat identisch (Key nicht lesbar)"
+BACKEND_I18N["en"]["rb_cert_key_unchanged"] = "certificate identical (key not readable)"
 BACKEND_I18N["en"]["profile_exists"] = "A profile named {name} already exists."
+
+# Geräte-Backup (backup.py, /backup/*)
+BACKEND_I18N["de"].update({
+    "precheck_auth_none": "Anmeldung am Gerät deaktiviert (passwordstatus = not_required): Zugriff ohne Passwort.",
+    "backup_factory": "Gerät im Werkszustand: Ohne gesetztes Passwort sind die Einstellungen nicht lesbar, und es gibt nichts zu sichern.",
+    "backup_precheck_running": "Vorprüfung läuft...",
+    "backup_reading": "Einstellungen werden vom Gerät gelesen...",
+    "backup_saving": "Backup wird gespeichert...",
+    "backup_done": "Backup gespeichert als Profil {name}: {read} Werte gelesen, {not_readable} nicht lesbar, {not_backed_up} nicht sicherbar.",
+    "backup_file_missing": "Backup-Datei nicht gefunden.",
+    "bk_sec_device_tags": "Device Tags", "bk_sec_network": "Network", "bk_sec_port_configuration": "Portkonfiguration",
+    "bk_sec_hostname": "Hostname", "bk_sec_fieldbus_type": "Feldbus",
+    "bk_note_hostname_no_action": "Der Hostname ist im Profil gespeichert, der Bereich steht aber auf „Keine Aktion“. So erhält ein anderes Gerät beim Einspielen nicht denselben Namen.",
+    "bk_sec_system_ntp": "NTP", "bk_sec_system_nodered": "Node-RED", "bk_sec_system_security": "Credentials",
+    "bk_sec_connections_http": "HTTP", "bk_sec_connections_opcua": "OPC UA", "bk_sec_connections_mqtt_client": "MQTT Client",
+    "bk_sec_connections_mqtt_command_channel": "MQTT Command Channel", "bk_sec_iodd": "IODD",
+    "bk_sec_node_red_flows": "Node-RED Flows", "bk_sec_node_red_palettes": "Node-RED Paletten",
+    "bk_state_read": "Gelesen", "bk_state_not_readable": "Nicht lesbar", "bk_state_not_backed_up": "Nicht gesichert", "bk_state_info": "Info",
+    "bk_lbl_address": "IP-Adresse", "bk_lbl_subnetmask": "Subnetzmaske", "bk_lbl_opcua_cert": "OPC UA Zertifikat",
+    "bk_lbl_mqttcc_password": "MQTTCC Passwort", "bk_lbl_palettes": "Node-RED Paletten", "bk_lbl_iodd": "IODD-Dateien",
+    "bk_note_unknown_value": "Unbekannter Wert; im Profil auf „Keine Aktion“ gesetzt.",
+    "bk_note_network_no_action": "Netzwerkwerte sind im Profil gespeichert, der Bereich steht aber auf „Keine Aktion“. So wird eine statische IP beim Einspielen auf ein anderes Gerät nicht doppelt vergeben. Bei Bedarf im Editor auf „Konfigurieren“ stellen.",
+    "bk_note_opcua_certificate": "Der Private Key ist nicht auslesbar. Zertifikat und Key bei Bedarf im Editor hinzufügen.",
+    "bk_note_mqttcc_password": "Das Gerät bietet keinen Lesepfad für das Passwort. Bei Bedarf im Editor eintragen.",
+    "bk_note_iodd": "IODD-Dateien lassen sich nicht vom Gerät herunterladen.",
+    "bk_note_flows_skipped": "Node-RED-Flows nicht gesichert (Option nicht gewählt).",
+    "bk_note_flows_empty": "Keine Node-RED-Flows vorhanden.",
+    "bk_note_flows_nodes": "Anzahl Knoten. Als Flow-Datei im Profil gespeichert (ohne Node-RED-Credentials).",
+    "bk_note_palette": "Installiert. Paletten lassen sich nicht vom Gerät herunterladen; die TGZ-Datei bei Bedarf im Editor hinzufügen.",
+    "bk_note_palettes_none": "Keine nachinstallierten Paletten.",
+    "bk_note_palettes_unknown": "Installierte Paletten nicht lesbar (Node-RED nicht erreichbar).",
+    "bk_sec_connections_https": "HTTPS",
+    "bk_sec_service_monitor": "Service Monitor",
+    "bk_note_monitor_none": "Keine Monitor-Einträge vorhanden.",
+    "bk_note_monitor_credentials": "Der Empfänger enthält Zugangsdaten. Sie stehen unverschlüsselt im Backup-Profil.",
+    "bk_note_monitor_raw": "Empfänger nicht zerlegbar; er wird unverändert übernommen.",
+    "bk_lbl_https_cert": "HTTPS Zertifikat", "bk_lbl_mqtt_client_cert": "MQTT Client-Zertifikat", "bk_lbl_mqttcc_client_cert": "MQTTCC Client-Zertifikat",
+    "bk_note_cert_key_pem_present": "Ein Zertifikat ist installiert, der Private Key ist aber nicht auslesbar. Zertifikat und Key bei Bedarf im Editor hinzufügen.",
+    "bk_note_cert_key_pem_none": "Kein eigenes Zertifikat installiert.",
+})
+BACKEND_I18N["en"].update({
+    "precheck_auth_none": "Login on the device is disabled (passwordstatus = not_required): access without password.",
+    "backup_factory": "Device in factory state: without a password set, the settings cannot be read and there is nothing to back up.",
+    "backup_precheck_running": "Pre-check running...",
+    "backup_reading": "Reading settings from the device...",
+    "backup_saving": "Saving backup...",
+    "backup_done": "Backup saved as profile {name}: {read} values read, {not_readable} not readable, {not_backed_up} cannot be backed up.",
+    "backup_file_missing": "Backup file not found.",
+    "bk_sec_device_tags": "Device Tags", "bk_sec_network": "Network", "bk_sec_port_configuration": "Port configuration",
+    "bk_sec_hostname": "Hostname", "bk_sec_fieldbus_type": "Fieldbus",
+    "bk_note_hostname_no_action": "The hostname is stored in the profile, but the section is set to \"No action\". This prevents another device from getting the same name when the backup is restored.",
+    "bk_sec_system_ntp": "NTP", "bk_sec_system_nodered": "Node-RED", "bk_sec_system_security": "Credentials",
+    "bk_sec_connections_http": "HTTP", "bk_sec_connections_opcua": "OPC UA", "bk_sec_connections_mqtt_client": "MQTT Client",
+    "bk_sec_connections_mqtt_command_channel": "MQTT Command Channel", "bk_sec_iodd": "IODD",
+    "bk_sec_node_red_flows": "Node-RED flows", "bk_sec_node_red_palettes": "Node-RED palettes",
+    "bk_state_read": "Read", "bk_state_not_readable": "Not readable", "bk_state_not_backed_up": "Not backed up", "bk_state_info": "Info",
+    "bk_lbl_address": "IP address", "bk_lbl_subnetmask": "Subnet mask", "bk_lbl_opcua_cert": "OPC UA certificate",
+    "bk_lbl_mqttcc_password": "MQTTCC password", "bk_lbl_palettes": "Node-RED palettes", "bk_lbl_iodd": "IODD files",
+    "bk_note_unknown_value": "Unknown value; set to \"No action\" in the profile.",
+    "bk_note_network_no_action": "Network values are stored in the profile, but the section is set to \"No action\". This prevents a static IP from being assigned twice when the backup is restored to another device. Set it to \"Configure\" in the editor if needed.",
+    "bk_note_opcua_certificate": "The private key cannot be read. Add certificate and key in the editor if needed.",
+    "bk_note_mqttcc_password": "The device offers no read path for the password. Enter it in the editor if needed.",
+    "bk_note_iodd": "IODD files cannot be downloaded from the device.",
+    "bk_note_flows_skipped": "Node-RED flows not backed up (option not selected).",
+    "bk_note_flows_empty": "No Node-RED flows present.",
+    "bk_note_flows_nodes": "Number of nodes. Stored as flow file in the profile (without Node-RED credentials).",
+    "bk_note_palette": "Installed. Palettes cannot be downloaded from the device; add the TGZ file in the editor if needed.",
+    "bk_note_palettes_none": "No additionally installed palettes.",
+    "bk_note_palettes_unknown": "Installed palettes not readable (Node-RED not reachable).",
+    "bk_sec_connections_https": "HTTPS",
+    "bk_sec_service_monitor": "Service Monitor",
+    "bk_note_monitor_none": "No monitor entries present.",
+    "bk_note_monitor_credentials": "The recipient contains credentials. They are stored unencrypted in the backup profile.",
+    "bk_note_monitor_raw": "Recipient cannot be split; it is taken over unchanged.",
+    "bk_lbl_https_cert": "HTTPS certificate", "bk_lbl_mqtt_client_cert": "MQTT client certificate", "bk_lbl_mqttcc_client_cert": "MQTTCC client certificate",
+    "bk_note_cert_key_pem_present": "A certificate is installed, but the private key cannot be read. Add certificate and key in the editor if needed.",
+    "bk_note_cert_key_pem_none": "No custom certificate installed.",
+})
 
 
 def msg(key, lang="de", **kwargs):

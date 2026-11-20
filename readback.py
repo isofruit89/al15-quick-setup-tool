@@ -14,7 +14,11 @@ import base64
 import hashlib
 import re
 
-from service_definitions import normalize_mqtt_trusted_server_certificates
+from service_definitions import (
+    CERT_KEY_PEM_SUFFIX, MONITOR_ADD, MONITOR_GETITEMS, MONITOR_REMOVE_UNLISTED, normalize_monitor_item,
+    normalize_mqtt_trusted_server_certificates, public_monitor_item,
+)
+from service_definitions import FIELDBUS_ENABLE, FIELDBUS_TYPE_STATUS, FIELDBUS_TYPES
 
 # setdata-Pfade ohne getdata-Gegenstück: immer schreiben
 ALWAYS_WRITE = {
@@ -47,6 +51,23 @@ class DeviceReader:
                 self._cache["__opcua_cert__"] = None
         return self._cache["__opcua_cert__"]
 
+    def entries(self):
+        """Alle bisher gelesenen Pfade: {adr: {"ok", "value", "code"}} (für die Backup-Rohdatei)."""
+        return {adr: {"ok": ok, "value": value, "code": code}
+                for adr, (ok, value, code) in ((a, e) for a, e in self._cache.items() if not a.startswith("__"))}
+
+    def read_service(self, adr):
+        """Dienst ohne getdata-Form (z. B. /monitor/getitems): (ok, data, code)."""
+        key = "svc:" + adr
+        if key not in self._cache:
+            try:
+                resp = self._read_fn(adr)
+            except Exception as exc:
+                resp = {"code": 500, "error": str(exc)[:200]}
+            ok = str(resp.get("code", "")) == "200"
+            self._cache[key] = (ok, resp.get("data") if ok else None, resp.get("code"))
+        return self._cache[key]
+
     def read(self, adr):
         if adr not in self._cache:
             try:
@@ -76,7 +97,7 @@ def _pem_blocks(value):
 
 
 def values_equal(adr, current, target):
-    if "trustedservercertificates" in adr:
+    if "trustedservercertificates" in adr or "trustedclientcertificates" in adr:
         return _pem_blocks(current) == _pem_blocks(target)
     if isinstance(target, bool):
         return isinstance(current, bool) and current == target
@@ -114,11 +135,34 @@ def opcua_settings_equal(current, target):
 # ---------------------------------------------------------------------------
 # Entscheidung je Request
 # ---------------------------------------------------------------------------
+def _cert_fingerprint(pem):
+    blocks = _pem_blocks(pem)
+    return hashlib.sha256("\n".join(blocks).encode()).hexdigest() if blocks else None
+
+
+def decide_certificate_key_pem(reader, req):
+    """certificate_key_pem: Das Gerät liefert nur das Zertifikat zurück (key/password immer null).
+    Gleiches Zertifikat -> überspringen; der Key gehört zwingend zum Zertifikat."""
+    adr = req["adr"]
+    target = ((req.get("data") or {}).get("newvalue") or {})
+    target_fp = _cert_fingerprint(target.get("certificate"))
+    shown_target = {"certificate_sha256": target_fp}
+    ok, current, code = reader.read(adr[: -len("/setdata")] + "/getdata")
+    if not ok:
+        return _decision("unverified", None, shown_target, f"read_failed:{code}")
+    current_fp = _cert_fingerprint((current or {}).get("certificate") if isinstance(current, dict) else None)
+    if current_fp and current_fp == target_fp:
+        return _decision("skip", {"certificate_sha256": current_fp}, shown_target, "cert_key_unchanged")
+    return _decision("write", {"certificate_sha256": current_fp}, shown_target)
+
+
 def decide_setdata(reader, req):
     adr, data = req["adr"], req.get("data") or {}
     target = data.get("newvalue")
     if adr in ALWAYS_WRITE:
         return _decision("unverified", None, target, "no_read_path")
+    if adr.endswith(CERT_KEY_PEM_SUFFIX):
+        return decide_certificate_key_pem(reader, req)
     ok, current, code = reader.read(adr[: -len("/setdata")] + "/getdata")
     if not ok:
         return _decision("unverified", None, target, f"read_failed:{code}")
@@ -167,6 +211,71 @@ def decide_network(reader, req):
     return _decision("skip" if same else "write", shown, target)
 
 
+# ---------------------------------------------------------------------------
+# Service Monitor
+# ---------------------------------------------------------------------------
+def monitor_items(reader):
+    ok, data, code = reader.read_service(MONITOR_GETITEMS)
+    items = (data or {}).get("items") if isinstance(data, dict) else None
+    return (ok and isinstance(items, list)), (items or []), code
+
+
+def _monitor_matches(device_item, target):
+    """Gleicher Inhalt; die description vergleicht das Tool nur, wenn das Gerät sie zurückliefert."""
+    if normalize_monitor_item(device_item) != normalize_monitor_item(target):
+        return False
+    if "description" in device_item and str(device_item.get("description") or "") != str(target.get("description") or ""):
+        return False
+    return True
+
+
+def decide_monitor_add(reader, req):
+    target = req.get("data") or {}
+    shown_target = public_monitor_item(target)
+    ok, items, code = monitor_items(reader)
+    if not ok:
+        return _decision("unverified", None, shown_target, f"read_failed:{code}")
+    if "id" in target:
+        current = next((i for i in items if i.get("id") == target["id"]), None)
+        if current is None:
+            return _decision("write", None, shown_target, "monitor_new")
+        return _decision("skip" if _monitor_matches(current, target) else "write", public_monitor_item(current), shown_target)
+    same = next((i for i in items if _monitor_matches(i, target)), None)
+    if same is not None:
+        return _decision("skip", public_monitor_item(same), shown_target, "monitor_same_content")
+    return _decision("write", None, shown_target, "monitor_new")
+
+
+def monitor_unlisted(items, keep):
+    """Geräteeinträge, die weder per ID noch per Inhalt im Profil stehen."""
+    keep_ids = {k.get("id") for k in keep if "id" in k}
+    return [i for i in items if i.get("id") not in keep_ids and not any(_monitor_matches(i, k) for k in keep)]
+
+
+def decide_monitor_remove_unlisted(reader, req):
+    keep = (req.get("data") or {}).get("keep") or []
+    ok, items, code = monitor_items(reader)
+    if not ok:
+        return _decision("unverified", None, None, f"read_failed:{code}")
+    remove = monitor_unlisted(items, keep)
+    if not remove:
+        return _decision("skip", None, {"remove_ids": []}, "monitor_nothing_to_remove")
+    return _decision("write", [public_monitor_item(i) for i in remove], {"remove_ids": [i.get("id") for i in remove]})
+
+
+def decide_fieldbus_type(reader, req):
+    target = FIELDBUS_ENABLE[req["adr"]]
+    ok, current, code = reader.read(FIELDBUS_TYPE_STATUS + "/getdata")
+    if not ok:
+        return _decision("unverified", None, FIELDBUS_TYPES[target][0], f"read_failed:{code}")
+    try:
+        current = int(current)
+    except (TypeError, ValueError):
+        return _decision("unverified", current, FIELDBUS_TYPES[target][0], "unknown_value")
+    shown = FIELDBUS_TYPES.get(current, (str(current),))[0]
+    return _decision("skip" if current == target else "write", shown, FIELDBUS_TYPES[target][0])
+
+
 def plan_requests(reader, requests):
     """Gibt [(request, decision)] zurück. OPC UA (Stop/Settings/Start) wird als Gruppe entschieden."""
     planned = []
@@ -186,7 +295,13 @@ def plan_requests(reader, requests):
             planned.extend(_plan_opcua_group(reader, group))
             i = j
             continue
-        if adr == NETWORK_SET:
+        if adr == MONITOR_ADD:
+            planned.append((req, decide_monitor_add(reader, req)))
+        elif adr == MONITOR_REMOVE_UNLISTED:
+            planned.append((req, decide_monitor_remove_unlisted(reader, req)))
+        elif adr in FIELDBUS_ENABLE:
+            planned.append((req, decide_fieldbus_type(reader, req)))
+        elif adr == NETWORK_SET:
             planned.append((req, decide_network(reader, req)))
         elif STATUS_ACTION.match(adr):
             planned.append((req, decide_status_action(reader, req)))

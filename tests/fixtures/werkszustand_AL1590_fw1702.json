@@ -1,0 +1,173 @@
+{
+  "schema_version": 2,
+  "name": "werkszustand_AL1590_fw1702",
+  "device_tags": {
+    "apply": true,
+    "application_tag": "",
+    "function_tag": "",
+    "location_tag": ""
+  },
+  "port_configuration": {
+    "apply": true,
+    "ports": [
+      {
+        "port": 1,
+        "pin4": 3,
+        "pin2": 0
+      },
+      {
+        "port": 2,
+        "pin4": 3,
+        "pin2": 0
+      },
+      {
+        "port": 3,
+        "pin4": 3,
+        "pin2": 0
+      },
+      {
+        "port": 4,
+        "pin4": 3,
+        "pin2": 0
+      },
+      {
+        "port": 5,
+        "pin4": 3
+      },
+      {
+        "port": 6,
+        "pin4": 3
+      },
+      {
+        "port": 7,
+        "pin4": 3
+      },
+      {
+        "port": 8,
+        "pin4": 3
+      }
+    ]
+  },
+  "fieldbus_type": {
+    "apply": true,
+    "type": 2
+  },
+  "system_ntp": {
+    "apply": true,
+    "servers": [
+      "0.pool.ntp.org",
+      "1.pool.ntp.org",
+      "2.pool.ntp.org"
+    ],
+    "action": "start"
+  },
+  "system_nodered": {
+    "apply": true,
+    "action": "stop"
+  },
+  "system_security": {
+    "apply": true,
+    "credentials_enabled": true
+  },
+  "connections_http": {
+    "apply": true,
+    "port": 80,
+    "action": "stop"
+  },
+  "connections_https": {
+    "apply": true,
+    "port": 443,
+    "secure": 0,
+    "certificate": null,
+    "validate_client_certificate": 0,
+    "trustedclientcertificates": null
+  },
+  "connections_opcua": {
+    "apply": true,
+    "port": 4843,
+    "enable_anonymous": false,
+    "security_profiles": [
+      {
+        "name": "Basic256Sha256",
+        "enabled": true
+      },
+      {
+        "name": "Aes128Sha256RsaOaep",
+        "enabled": true
+      },
+      {
+        "name": "Aes256Sha256RsaPss",
+        "enabled": true
+      },
+      {
+        "name": "None",
+        "enabled": false
+      }
+    ],
+    "certificate": null,
+    "action": "stop"
+  },
+  "connections_mqtt_client": {
+    "apply": true,
+    "version": 1,
+    "qos": 0,
+    "clientid": "",
+    "keepalive": 15,
+    "willtopic": "",
+    "willmessage": "",
+    "retain": false,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": null,
+    "client_certificate": null,
+    "action": "stop"
+  },
+  "connections_mqtt_command_channel": {
+    "apply": true,
+    "brokerip": "",
+    "brokerport": 1883,
+    "version": 1,
+    "qos": 0,
+    "keepalive": 15,
+    "cmdtopic": "iotcore-request",
+    "defaultreplytopic": "iotcore-response",
+    "clientid": "",
+    "willtopic": "",
+    "willmessage": "",
+    "secure": 0,
+    "validate_server_certificate": 0,
+    "trustedservercertificates": null,
+    "client_certificate": null,
+    "user": "",
+    "password": null,
+    "action": "stop"
+  },
+  "service_monitor": {
+    "apply": true,
+    "items": [],
+    "remove_unlisted": false
+  },
+  "hostname": {
+    "apply": false,
+    "hostname": "ifm-AL1590-000251100049"
+  },
+  "network": {
+    "apply": false,
+    "mode": "dhcp",
+    "address": "",
+    "subnetmask": "",
+    "gateway": "",
+    "dns_servers": []
+  },
+  "iodd": {
+    "apply": true,
+    "files": []
+  },
+  "node_red_flows": {
+    "apply": true,
+    "files": []
+  },
+  "node_red_palettes": {
+    "apply": true,
+    "files": []
+  }
+}

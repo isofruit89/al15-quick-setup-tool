@@ -4,7 +4,7 @@
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <title>AL15 Quick-Setup-Tool v{{ app_version }}</title>
-  <link rel='stylesheet' href='{{ url_for("static", filename="style.css") }}?v=40'>
+  <link rel='stylesheet' href='{{ url_for("static", filename="style.css") }}?v=49'>
 </head>
 <body>
   <header class='top-header'>
@@ -35,6 +35,10 @@
         <div class='mode-title'>Profilverwaltung</div>
         <div class='mode-subtitle'>Profile laden, bearbeiten, kopieren oder löschen.</div>
       </button>
+      <button class='mode-card' id='openBackupBtn' type='button'>
+        <div class='mode-title'>Geräte-Backup</div>
+        <div class='mode-subtitle'>Einstellungen eines AL159x auslesen und als Profil speichern.</div>
+      </button>
     </div>
   </main>
 
@@ -59,7 +63,7 @@
         <div>
           <button class='back-btn' id='backHome1' type='button'>← Startseite</button>
           <h2>Neuer Parametersatz</h2>
-          <p>Tragen Sie die Werte abweichend von den Default-Einstellungen ein.</p>
+          <p>Die Felder sind mit den Werkseinstellungen vorbelegt. Bereiche, die nicht übertragen werden sollen, stellen Sie auf „Keine Aktion“. Leere Felder und Zertifikatsfelder ohne Datei bleiben am Gerät unverändert.</p>
           <p class='minor-hint'>Hinweis: Kompatibel ab Firmware 1.7</p>
         </div>
         <div class='hero-actions'>
@@ -88,6 +92,20 @@
           <div class='field-block'><label>Application Tag</label><input id='application_tag' placeholder='z. B. AppTag'></div>
           <div class='field-block'><label>Function Tag</label><input id='function_tag' placeholder='z. B. FuncTag'></div>
           <div class='field-block'><label>Location Tag</label><input id='location_tag' placeholder='z. B. LocTag'></div>
+        </div>
+      </section>
+
+      <section class='card compact-card' id='sec_hostname'>
+        <div class='section-header'><h2>Hostname</h2><span class='hint' id='hostnameHint'>Leer = Hostname am Gerät unverändert. Die .local-Adresse übernimmt der neue Name nicht sofort.</span></div>
+        <div class='grid-3 compact-grid'>
+          <div class='field-block'><label>Hostname</label><input id='hostname' placeholder='ifm-AL1590-…' maxlength='63'></div>
+        </div>
+      </section>
+
+      <section class='card compact-card' id='sec_fieldbus'>
+        <div class='section-header'><h2 id='fieldbusTitle'>Feldbus</h2><span class='hint' id='fieldbusHint'>Umschalten zwischen PROFINET und EtherNet/IP. Der Wechsel dauert am Gerät etwa eine Minute.</span></div>
+        <div class='grid-3 compact-grid'>
+          <div class='field-block'><label id='fieldbusTypeLabel'>Feldbus</label><select id='fieldbus_type'><option value='0'>0 = PROFINET</option><option value='2'>2 = EtherNet/IP</option></select></div>
         </div>
       </section>
 
@@ -141,12 +159,37 @@
         <div class='connections-stack'>
           <div class='subcard connection-card small-http' id='sub_http'>
             <h3>HTTP</h3>
+            <div class='field-block'><label>Port</label><input id='http_port' placeholder='80'></div>
             <div class='segmented' data-target='http_action'>
               <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
               <button type='button' class='seg-btn' data-value='start'>Start</button>
               <button type='button' class='seg-btn' data-value='stop'>Stop</button>
             </div>
             <input id='http_action' type='hidden' value='none'>
+          </div>
+
+          <div class='subcard connection-card https-card' id='sub_https'>
+            <h3>HTTPS</h3>
+            <div class='opcua-cert-hint' id='httpsHint'>Änderungen am HTTPS-Server werden erst nach einem Neustart des Geräts wirksam (Code 230). Ein hochgeladenes Serverzertifikat liefert das Gerät danach aus, auch bei Security Mode 0. Es lässt sich nicht mehr löschen, nur durch ein anderes ersetzen.</div>
+            <div class='grid-3 compact-grid'>
+              <div class='field-block'><label>Port</label><input id='https_port' placeholder='443'></div>
+              <div class='field-block'><label>Security Mode</label><select id='https_secure'><option value='0'>0 = disabled</option><option value='1'>1 = enabled</option></select></div>
+              <div class='field-block'><label>Validate Client Certificate</label><select id='https_validate'><option value='0'>0 = none</option><option value='1'>1 = require</option></select></div>
+            </div>
+            <div class='field-warning hidden' id='httpsValidateWarn'></div>
+            <div class='pem-pair-panel' id='https_cert_panel'>
+              <h4 class='pem-pair-title' id='httpsCertTitle'>Serverzertifikat</h4>
+              <div class='grid-3 compact-grid'>
+                <div class='field-block'><label class='pem-cert-label'>Zertifikat (.pem / .crt)</label><input type='file' id='https_cert_file' accept='.pem,.crt,.cer'></div>
+                <div class='field-block'><label class='pem-key-label'>Private Key (.pem / .key)</label><input type='file' id='https_key_file' accept='.pem,.key'></div>
+                <div class='field-block'><label class='pem-pw-label'>Passwort des Keys</label><input type='password' id='https_key_password' autocomplete='new-password' placeholder='optional'></div>
+              </div>
+              <div id='https_cert_list' class='iodd-list'></div>
+            </div>
+            <div class='field-block'>
+              <label for='https_trusted'>Trusted Client Certificates</label>
+              <textarea id='https_trusted' rows='6' spellcheck='false' placeholder='-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----'></textarea>
+            </div>
           </div>
 
           <div class='subcard connection-card opcua-card' id='sub_opcua'>
@@ -165,7 +208,7 @@
               <div class='opcua-right'>
                 <div class='field-block opcua-anon'>
                   <label for='opcua_anonymous'>Anonymous</label>
-                  <select id='opcua_anonymous'><option value='' class='opt-noaction'>Keine Aktion</option><option value='false' class='opt-off'>Aus</option><option value='true' class='opt-on'>Ein</option></select>
+                  <select id='opcua_anonymous'><option value='false' class='opt-off'>Aus</option><option value='true' class='opt-on'>Ein</option></select>
                 </div>
                 <div class='profiles-grid neat-security' id='opcua_profiles'>
                   <label><input type='checkbox' id='prof_basic256'> Basic256Sha256</label>
@@ -187,9 +230,14 @@
           <div class='subcard connection-card mqtt-card' id='sub_mqtt_client'>
             <h3>MQTT Client</h3>
             <div class='grid-3 compact-grid'>
-              <div class='field-block'><label>QoS</label><select id='mqtt_qos'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = QoS0</option><option value='1'>1 = QoS1</option><option value='2'>2 = QoS2</option></select></div>
+              <div class='field-block'><label>Version</label><select id='mqtt_version'><option value='0'>0 = V3.1.0</option><option value='1'>1 = V3.1.1</option><option value='2'>2 = V5.0.0</option></select></div>
+              <div class='field-block'><label>Keep Alive (s)</label><input id='mqtt_keepalive' placeholder='15'></div>
+              <div class='field-block'><label>Retain</label><select id='mqtt_retain'><option value='false' class='opt-off'>Aus</option><option value='true' class='opt-on'>Ein</option></select></div>
+              <div class='field-block'><label>Will Topic</label><input id='mqtt_willtopic' placeholder='optional'></div>
+              <div class='field-block'><label>Will Message</label><input id='mqtt_willmessage' placeholder='optional'></div>
+              <div class='field-block'><label>QoS</label><select id='mqtt_qos'><option value='0'>0 = QoS0</option><option value='1'>1 = QoS1</option><option value='2'>2 = QoS2</option></select></div>
               <div class='field-block'><label>Client ID</label><input id='mqtt_clientid' placeholder='z. B. ClientIDAL15'></div>
-              <div class='field-block'><label>Validate Server Certificate</label><select id='mqtt_validate'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = none</option><option value='1'>1 = required</option><option value='2'>2 = required_no_ca</option></select></div>
+              <div class='field-block'><label>Validate Server Certificate</label><select id='mqtt_validate'><option value='0'>0 = none</option><option value='1'>1 = required</option><option value='2'>2 = required_no_ca</option></select></div>
             </div>
             <div class='segmented' data-target='mqtt_action'>
               <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
@@ -213,18 +261,31 @@
                 </div>
               </div>
             </div>
+            <div class='pem-pair-panel' id='mqtt_cert_panel'>
+              <h4 class='pem-pair-title' id='mqttClientCertTitle'>Client-Zertifikat</h4>
+              <div class='grid-3 compact-grid'>
+                <div class='field-block'><label class='pem-cert-label'>Zertifikat (.pem / .crt)</label><input type='file' id='mqtt_cert_file' accept='.pem,.crt,.cer'></div>
+                <div class='field-block'><label class='pem-key-label'>Private Key (.pem / .key)</label><input type='file' id='mqtt_key_file' accept='.pem,.key'></div>
+                <div class='field-block'><label class='pem-pw-label'>Passwort des Keys</label><input type='password' id='mqtt_key_password' autocomplete='new-password' placeholder='optional'></div>
+              </div>
+              <div id='mqtt_cert_list' class='iodd-list'></div>
+            </div>
           </div>
           <div class='subcard connection-card mqttcmd-card' id='sub_mqttcc'>
             <h3>MQTT Command Channel</h3>
             <div class='grid-3 compact-grid'>
               <div class='field-block'><label>Broker IP / Hostname</label><input id='mqttcmd_brokerip' placeholder='192.168.x.x'></div>
               <div class='field-block'><label>Broker Port</label><input id='mqttcmd_brokerport' placeholder='1883'></div>
-              <div class='field-block'><label>QoS</label><select id='mqttcmd_qos'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = QoS0</option><option value='1'>1 = QoS1</option><option value='2'>2 = QoS2</option></select></div>
+              <div class='field-block'><label>Version</label><select id='mqttcmd_version'><option value='0'>0 = V3.1.0</option><option value='1'>1 = V3.1.1</option><option value='2'>2 = V5.0.0</option></select></div>
+              <div class='field-block'><label>Keep Alive (s)</label><input id='mqttcmd_keepalive' placeholder='15'></div>
+              <div class='field-block'><label>QoS</label><select id='mqttcmd_qos'><option value='0'>0 = QoS0</option><option value='1'>1 = QoS1</option><option value='2'>2 = QoS2</option></select></div>
               <div class='field-block'><label>Command Topic</label><input id='mqttcmd_cmdtopic' placeholder='optional'></div>
               <div class='field-block'><label>Response Topic</label><input id='mqttcmd_replytopic' placeholder='optional'></div>
               <div class='field-block'><label>Client ID</label><input id='mqttcmd_clientid' placeholder='optional'></div>
-              <div class='field-block'><label>Security Mode</label><select id='mqttcmd_secure'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = disabled</option><option value='1'>1 = required</option></select></div>
-              <div class='field-block'><label>Validate Server Certificate</label><select id='mqttcmd_validate'><option value='' class='opt-noaction'>Keine Aktion</option><option value='0'>0 = none</option><option value='1'>1 = required</option><option value='2'>2 = required_no_ca</option></select></div>
+              <div class='field-block'><label>Will Topic</label><input id='mqttcmd_willtopic' placeholder='optional'></div>
+              <div class='field-block'><label>Will Message</label><input id='mqttcmd_willmessage' placeholder='optional'></div>
+              <div class='field-block'><label>Security Mode</label><select id='mqttcmd_secure'><option value='0'>0 = disabled</option><option value='1'>1 = required</option></select></div>
+              <div class='field-block'><label>Validate Server Certificate</label><select id='mqttcmd_validate'><option value='0'>0 = none</option><option value='1'>1 = required</option><option value='2'>2 = required_no_ca</option></select></div>
               <div class='field-block'><label>User</label><input id='mqttcmd_user' placeholder='optional'></div>
               <div class='field-block'><label>Passwort</label><input id='mqttcmd_password' type='password' autocomplete='new-password' placeholder='optional'></div>
             </div>
@@ -244,6 +305,15 @@
                 </div>
               </div>
             </div>
+            <div class='pem-pair-panel' id='mqttcmd_cert_panel'>
+              <h4 class='pem-pair-title' id='mqttCmdClientCertTitle'>Client-Zertifikat</h4>
+              <div class='grid-3 compact-grid'>
+                <div class='field-block'><label class='pem-cert-label'>Zertifikat (.pem / .crt)</label><input type='file' id='mqttcmd_cert_file' accept='.pem,.crt,.cer'></div>
+                <div class='field-block'><label class='pem-key-label'>Private Key (.pem / .key)</label><input type='file' id='mqttcmd_key_file' accept='.pem,.key'></div>
+                <div class='field-block'><label class='pem-pw-label'>Passwort des Keys</label><input type='password' id='mqttcmd_key_password' autocomplete='new-password' placeholder='optional'></div>
+              </div>
+              <div id='mqttcmd_cert_list' class='iodd-list'></div>
+            </div>
             <div class='segmented' data-target='mqttcmd_action'>
               <button type='button' class='seg-btn active' data-value='none'>Keine Aktion</button>
               <button type='button' class='seg-btn' data-value='start'>Start</button>
@@ -252,6 +322,16 @@
             <input id='mqttcmd_action' type='hidden' value='none'>
           </div>
         </div>
+      </section>
+
+      <section class='card compact-card' id='sec_monitor'>
+        <div class='section-header'><h2 id='monitorTitle'>Service Monitor</h2><span class='hint' id='monitorHint'>Sendet Datenpunkte zyklisch oder bei Änderung per MQTT/MQTTS an einen Broker.</span></div>
+        <div id='monitorItems' class='monitor-items'></div>
+        <div class='actions'>
+          <button id='monitorAddBtn' type='button' class='ghost'>+ Eintrag hinzufügen</button>
+        </div>
+        <label class='secrets-toggle'><input type='checkbox' id='monitor_remove_unlisted'><span id='monitorRemoveUnlistedLabel'>Einträge am Gerät entfernen, die nicht im Profil stehen</span></label>
+        <p class='minor-hint' id='monitorRemoveUnlistedHint'>Ohne diese Option bleiben vorhandene Einträge am Gerät erhalten.</p>
       </section>
 
       <section class='card status-card compact-card'>
@@ -334,6 +414,39 @@
     </div>
   </div>
 
+  <div class='backup-view hidden' id='backupView'>
+    <div class='page'>
+      <section class='card deploy-card'>
+        <div class='section-topline'>
+          <button class='back-btn' id='backHome5' type='button'>← Startseite</button>
+          <h2 id='backupTitle'>Geräte-Backup</h2>
+        </div>
+        <div class='deploy-help' id='backupInfo'>Das Tool liest alle Einstellungen, die ein Parametersatz enthalten kann, vom Gerät und speichert sie als Profil.</div>
+        <div class='field-row'><span class='label' id='backupIpLabel'>Host / IP</span><input id='backupIp' placeholder='https://192.168.0.77' autocomplete='url'></div>
+        <div class='field-row'><span class='label' id='backupUsernameLabel'>Benutzer</span><input id='backupUsername' value='admin'></div>
+        <div class='field-row'><span class='label' id='backupPasswordLabel'>Passwort</span><input id='backupPassword' type='password' autocomplete='current-password' value=''></div>
+        <div class='minor-hint' id='backupPasswordHint'>Ist die Anmeldung am Gerät deaktiviert, bleibt das Passwort leer.</div>
+        <div class='field-row'><span class='label' id='backupNameLabel'>Profilname</span><input id='backupName' placeholder='backup_Seriennummer_Datum'></div>
+        <label class='secrets-toggle'><input type='checkbox' id='backupIncludeFlows' checked><span id='backupIncludeFlowsLabel'>Node-RED-Flows mitsichern</span></label>
+        <div class='actions'>
+          <button id='backupConnectBtn' type='button'>Vorprüfung</button>
+          <button id='backupCreateBtn' class='accent' type='button' disabled>Backup erstellen</button>
+        </div>
+        <div class='minor-hint' id='backupRestoreHint'>Wiederherstellen: Das Backup-Profil unter „Parametersatz übertragen“ auswählen. Das Tool sendet dann nur die Werte, die vom Gerät abweichen.</div>
+      </section>
+      <section class='card'>
+        <h2 id='backupStatusTitle'>Status</h2>
+        <div id='backupStatus' class='status-box' data-key='backupNoResult'>Noch kein Backup erstellt.</div>
+        <div class='actions hidden' id='backupResultActions'>
+          <button id='backupOpenEditorBtn' type='button'>Im Editor öffnen</button>
+          <button id='backupDownloadProfileBtn' type='button' class='ghost'>Profil herunterladen</button>
+          <button id='backupDownloadRawBtn' type='button' class='ghost'>Rohdaten herunterladen</button>
+        </div>
+      </section>
+      <section class='card'><h2 id='backupResultTitle'>Ergebnis</h2><div id='backupTableWrap' class='table-wrap'></div></section>
+    </div>
+  </div>
+
   <dialog id='previewDialog'>
     <div class='dialog-head'>
       <h3>Technische Vorschau</h3>
@@ -345,7 +458,7 @@
   <script>
     window.DEFAULT_PROFILE = {{ default_profile_json|safe }};
   </script>
-  <script src='{{ url_for("static", filename="app.js") }}?v=40'></script>
+  <script src='{{ url_for("static", filename="app.js") }}?v=49'></script>
 </body>
 </html>
 

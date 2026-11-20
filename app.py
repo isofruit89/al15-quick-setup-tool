@@ -29,12 +29,16 @@ from service_definitions import (
     build_mqtt_client_requests,
     build_mqtt_command_channel_requests,
     build_port_configuration_requests,
+    build_https_requests,
+    build_monitor_requests,
+    build_hostname_requests,
+    build_fieldbus_type_requests,
 )
 
 urllib3.disable_warnings(InsecureRequestWarning)
 app = Flask(__name__)
 
-APP_VERSION = "1.7"
+APP_VERSION = "1.8"
 
 SOURCE_DIR = Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", SOURCE_DIR))
@@ -47,6 +51,8 @@ PROFILE_DIR.mkdir(exist_ok=True)
 EXPORT_DIR.mkdir(exist_ok=True)
 PALETTE_DIR = APP_DIR / "palettes"
 PALETTE_DIR.mkdir(exist_ok=True)
+BACKUP_DIR = APP_DIR / "backups"
+BACKUP_DIR.mkdir(exist_ok=True)
 
 TIMEOUT = 90
 IODD_COPY_ADR = "/ioddmanager/copy_iodd"
@@ -54,9 +60,14 @@ IODD_MAX_BYTES = int(os.getenv("AL15_IODD_MAX_BYTES", str(10 * 1024 * 1024)))
 
 
 ORDER_GROUPS = [
-    "device_tags", "port_configuration", "system_ntp", "system_nodered", "system_security",
+    "device_tags", "port_configuration", "fieldbus_type", "system_ntp", "system_nodered", "system_security",
     "connections_http", "connections_opcua", "connections_mqtt_client",
     "connections_mqtt_command_channel",
+    "service_monitor",
+    # HTTPS kurz vor Network: Port und Client-Zertifikatsprüfung können die Verbindung des Tools betreffen.
+    "connections_https",
+    # Hostname kurz vor Network: ändert den Zeroconf-Namen (.local), über den das Tool das Gerät erreichen kann.
+    "hostname",
     # Immer zuletzt ausführen
     "network",
 ]
@@ -66,16 +77,23 @@ from messages import LocalizedError, error_text, msg
 # Node-RED (Paletten, Flows) und Offline-Paketierung von Paletten
 from nodered import (
     NODERED_DEPLOYMENT_TYPE, validate_palette_files, palette_details, build_palette_preview, install_node_red_palette,
-    validate_flow_files, publish_node_red_flows, build_flow_preview,
+    validate_flow_files, publish_node_red_flows, build_flow_preview, read_node_red_flows, read_node_red_nodes,
 )
+# Geräte-Backup: Einstellungen vom Gerät lesen und als Profil speichern
+import backup as BACKUP
 from palette_packager import (
     repair_runtime_resolution, update_bundled_dependencies, direct_archive_name, create_direct_archive, validate_packed_archive,
 )
-from profile_schema import DEFAULT_PROFILE, migrate_profile, effective_profile
+from profile_schema import DEFAULT_PROFILE, FACTORY_PROFILE, migrate_profile, effective_profile
 # Zurücklesen vor dem Schreiben (nur notwendige Änderungen senden)
 from readback import DeviceReader, plan_requests
 from opcua_client import get_server_certificate
-from service_definitions import OPCUA_CERT_ADR
+from service_definitions import (
+    OPCUA_CERT_ADR, CERT_KEY_PEM_SUFFIX, MONITOR_ADD, MONITOR_REMOVE, MONITOR_GETITEMS, MONITOR_REMOVE_UNLISTED,
+    bind_data_point, public_monitor_item,
+)
+from readback import monitor_unlisted
+from service_definitions import FIELDBUS_ENABLE, FIELDBUS_SWITCH_TIMEOUT
 
 
 def get_lang(default="de"):
@@ -120,7 +138,9 @@ def make_payload(adr, user, password, data=None, top_level=False):
 
 
 def rpc_post(ip, payload):
-    response = requests.post(ip.rstrip("/") + "/rpc", json=payload, timeout=TIMEOUT, verify=False)
+    # Die Feldbus-Umschaltung blockiert am Gerät ca. 60 s.
+    timeout = FIELDBUS_SWITCH_TIMEOUT if payload.get("adr") in FIELDBUS_ENABLE else TIMEOUT
+    response = requests.post(ip.rstrip("/") + "/rpc", json=payload, timeout=timeout, verify=False)
     response.raise_for_status()
     return response.json()
 
@@ -206,6 +226,10 @@ def compile_requests(profile):
             reqs = build_device_tags_requests(data)
         elif section == "port_configuration":
             reqs = build_port_configuration_requests(data)
+        elif section == "hostname":
+            reqs = build_hostname_requests(data)
+        elif section == "fieldbus_type":
+            reqs = build_fieldbus_type_requests(data)
         elif section == "system_ntp":
             reqs = build_ntp_requests(data)
         elif section == "system_nodered":
@@ -214,6 +238,10 @@ def compile_requests(profile):
             reqs = build_auth_enabled_requests({"enabled": data.get("credentials_enabled")})
         elif section == "connections_http":
             reqs = build_http_requests(data)
+        elif section == "connections_https":
+            reqs = build_https_requests(data)
+        elif section == "service_monitor":
+            reqs = build_monitor_requests(data)
         elif section == "connections_opcua":
             reqs = build_opcua_requests(data)
         elif section == "connections_mqtt_client":
@@ -247,7 +275,20 @@ OPCUA_STOP_ADR = "/connections/opcua_server/status/stop"
 HTTP_ALLOWED_SERVICES_ADR = "/connections/httpserver0/httpserver/allowed_services/setdata"
 
 
-def is_success_code(code, adr=None): return str(code) == "200" or (adr == HTTP_ALLOWED_SERVICES_ADR and str(code) == "230")
+def is_success_code(code, adr=None):
+    """200 = OK, 230 = übernommen, wirksam nach Neustart (laut Web-UI des AL1590)."""
+    return str(code) in ("200", "230")
+
+
+def row_status(row, lang):
+    code = str(row.get("code", ""))
+    if code == "230":
+        return msg("status_ok_reboot", lang)
+    return msg("status_ok", lang) if is_success_code(code, row.get("request_adr")) else msg("status_error", lang)
+
+
+def needs_reboot(rows):
+    return any(str(r.get("code", "")) == "230" for r in rows)
 def is_opcua_conditional_stop(req): return req.get("adr") == OPCUA_STOP_ADR and str(req.get("label", "")).startswith("OPC UA Stop")
 
 def read_opcua_server_status(ip, username, password):
@@ -405,8 +446,10 @@ def device_precheck(ip, username, password, new_password="", confirm="", lang="d
         result["ok"] = not result["errors"]
         return result
 
-    # 3) Anmeldung mit den eingegebenen Zugangsdaten
-    if not password:
+    # 3) Anmeldung mit den eingegebenen Zugangsdaten. Ist die Anmeldung am Gerät
+    #    deaktiviert (passwordstatus = not_required, verifiziert 2026-11-20), geht es ohne Passwort.
+    no_login = status == "not_required"
+    if not password and not no_login:
         _check(result, "auth", "error", msg("precheck_password_missing", lang), lang, 401)
         return result
     try:
@@ -429,7 +472,7 @@ def device_precheck(ip, username, password, new_password="", confirm="", lang="d
         _check(result, "auth", "error", msg("precheck_auth_unexpected", lang, response=str(auth)[:300]), lang, code or 500)
         return result
     result["auth_ok"] = True
-    _check(result, "auth", "ok", msg("precheck_auth_ok", lang, user=username), lang)
+    _check(result, "auth", "ok", msg("precheck_auth_none", lang) if no_login and not password else msg("precheck_auth_ok", lang, user=username), lang)
 
     # 4) Geräteidentität (Produkt, Firmware, Seriennummer)
     check_device_identity(ip, username, password, lang, result)
@@ -459,20 +502,28 @@ def precheck_summary(result, lang):
 
 
 @app.route("/")
-def index(): return render_template("index.html", app_version=APP_VERSION, default_profile_json=json.dumps(DEFAULT_PROFILE, ensure_ascii=False), default_ip="")
+def index(): return render_template("index.html", app_version=APP_VERSION, default_profile_json=json.dumps(FACTORY_PROFILE, ensure_ascii=False), default_ip="")
+
+
+def write_profile(profile):
+    """Prüft und speichert ein Profil (Schema v2) samt Request-Export und Asset-Ordnern.
+    Gibt die Anzahl der Requests im Export zurück. Genutzt von Speichern, Kopieren und Geräte-Backup."""
+    name = profile["name"]
+    validate_iodd_files(profile); validate_palette_files(profile); validate_flow_files(profile)
+    active = effective_profile(profile)
+    export_preview = [public_request(r) for r in compile_requests(active)] + build_iodd_preview(active) + build_palette_preview(active) + build_flow_preview(active)
+    (PROFILE_DIR / f"{name}.json").write_text(json.dumps(profile, indent=2, ensure_ascii=False), encoding="utf-8")
+    (EXPORT_DIR / f"{name}_requests.json").write_text(json.dumps(export_preview, indent=2, ensure_ascii=False), encoding="utf-8")
+    sync_asset_directories(name, profile)
+    return len(export_preview)
 
 
 @app.route("/save", methods=["POST"])
 def save_profile():
     try:
         profile = migrate_profile(request.json or {}); name = safe_name(profile.get("name")); profile["name"] = name
-        validate_iodd_files(profile); validate_palette_files(profile); validate_flow_files(profile)
-        active = effective_profile(profile)
-        export_preview = [public_request(r) for r in compile_requests(active)] + build_iodd_preview(active) + build_palette_preview(active) + build_flow_preview(active)
-        (PROFILE_DIR / f"{name}.json").write_text(json.dumps(profile, indent=2, ensure_ascii=False), encoding="utf-8")
-        (EXPORT_DIR / f"{name}_requests.json").write_text(json.dumps(export_preview, indent=2, ensure_ascii=False), encoding="utf-8")
-        sync_asset_directories(name, profile)
-        return jsonify({"ok": True, "name": name, "requests_count": len(export_preview)})
+        count = write_profile(profile)
+        return jsonify({"ok": True, "name": name, "requests_count": count})
     except Exception as exc: return jsonify({"ok": False, "error": error_text(exc, get_lang())}), 400
 
 
@@ -506,13 +557,8 @@ def copy_profile(name):
     if (PROFILE_DIR / f"{new_name}.json").exists() and not body.get("overwrite"):
         return jsonify({"ok": False, "exists": True, "name": new_name, "error": msg("profile_exists", get_lang(), name=new_name)}), 409
     profile = migrate_profile(json.loads(source.read_text(encoding="utf-8"))); profile["name"] = new_name
-    validate_iodd_files(profile); validate_palette_files(profile); validate_flow_files(profile)
-    active = effective_profile(profile)
-    export_preview = [public_request(r) for r in compile_requests(active)] + build_iodd_preview(active) + build_palette_preview(active) + build_flow_preview(active)
-    (PROFILE_DIR / f"{new_name}.json").write_text(json.dumps(profile, indent=2, ensure_ascii=False), encoding="utf-8")
-    (EXPORT_DIR / f"{new_name}_requests.json").write_text(json.dumps(export_preview, indent=2, ensure_ascii=False), encoding="utf-8")
-    sync_asset_directories(new_name, profile)
-    return jsonify({"ok": True, "name": new_name, "requests_count": len(export_preview)})
+    count = write_profile(profile)
+    return jsonify({"ok": True, "name": new_name, "requests_count": count})
 
 
 @app.route("/preview", methods=["POST"])
@@ -552,6 +598,8 @@ def dry_run():
             ip = normalize_device_url(body.get("ip")); username = body.get("username") or "admin"; password = body.get("password") or ""
             pre = device_precheck(ip, username, password, body.get("new_password") or "", body.get("confirm_new_password") or "", lang)
             if pre["ok"] and pre["mode"] == "normal_auth":
+                hostname = pre["identity"].get("hostname", "")
+                regular_requests = bind_monitor_requests(regular_requests, hostname)
                 planned = plan_requests(make_reader(ip, username, password), regular_requests + network_requests)
                 info = msg("dryrun_with_device", lang, name=pre["identity"].get("hostname", ""), **plan_summary(planned))
             elif pre.get("factory_state") or pre.get("mode") == "factory_password_change":
@@ -612,6 +660,7 @@ def run_apply_precheck(ip, username, body, lang, results):
     confirm = body.get("confirm_new_password") or ""
     pre = device_precheck(ip, username, password, new_password, confirm, lang)
     results.extend(precheck_rows(pre))
+    body["_hostname"] = pre.get("identity", {}).get("hostname") or ""
     if not pre["ok"]:
         return None, precheck_summary(pre, lang)
     expected = str(body.get("expected_serial") or "").strip()
@@ -699,6 +748,15 @@ def public_data(adr, data):
                 "private_key_crc32": data.get("private_key_crc32")}
     if adr in SECRET_SETDATA and isinstance(data, dict):
         return {"newvalue": "*** masked ***"}
+    if adr == MONITOR_ADD and isinstance(data, dict):
+        return public_monitor_item(data)
+    if adr == MONITOR_REMOVE_UNLISTED and isinstance(data, dict):
+        return {"keep": [public_monitor_item(k) for k in data.get("keep") or []]}
+    if str(adr or "").endswith(CERT_KEY_PEM_SUFFIX) and isinstance(data, dict) and isinstance(data.get("newvalue"), dict):
+        value = data["newvalue"]
+        cert = str(value.get("certificate") or "")
+        return {"newvalue": {"certificate_sha256": hashlib.sha256(cert.encode()).hexdigest(), "certificate_chars": len(cert),
+                             "key": "*** masked ***", **({"password": "*** masked ***"} if value.get("password") else {})}}
     return data
 
 
@@ -728,6 +786,41 @@ def plan_summary(planned):
     return {"change": counts["write"], "skip": counts["skip"], "unverified": counts["unverified"]}
 
 
+def bind_monitor_requests(requests, hostname):
+    """Setzt den Gerätenamen des Zielgeräts vor die Datenpunkte der Service-Monitor-Einträge."""
+    out = []
+    for req in requests:
+        if req.get("adr") == MONITOR_ADD and hostname:
+            data = dict(req.get("data") or {})
+            data["data_points"] = [bind_data_point(p, hostname) for p in data.get("data_points") or []]
+            if data.get("sample_condition"):
+                data["sample_condition"] = bind_data_point(data["sample_condition"], hostname)
+            req = dict(req, data=data)
+        out.append(req)
+    return out
+
+
+def remove_unlisted_monitor_items(ip, username, password, req, lang):
+    """Entfernt Monitor-Einträge, die nicht im Profil stehen. Liest die Einträge frisch, weil
+    unmittelbar vorher neue Einträge (mit vom Gerät vergebener ID) angelegt worden sein können."""
+    resp = rpc_post(ip, make_payload(MONITOR_GETITEMS, username, password))
+    items = ((resp.get("data") or {}).get("items") or []) if str(resp.get("code")) == "200" else None
+    if items is None:
+        return [{"path": req["label"] + " → " + MONITOR_GETITEMS, "value": None, "code": resp.get("code", ""),
+                 "request_adr": MONITOR_GETITEMS, "request_data": None, "response": resp}]
+    rows = []
+    for item in monitor_unlisted(items, (req.get("data") or {}).get("keep") or []):
+        data = {"id": item.get("id")}
+        r = rpc_post(ip, make_payload(MONITOR_REMOVE, username, password, data))
+        rows.append({"path": f"Service Monitor entfernen ID {item.get('id')} → {MONITOR_REMOVE}", "value": public_monitor_item(item),
+                     "code": r.get("code", ""), "request_adr": MONITOR_REMOVE, "request_data": data, "response": r})
+    if not rows:
+        rows.append({"path": req["label"] + " → " + MONITOR_REMOVE, "value": None, "code": 200, "skipped": True,
+                     "status": msg("status_unchanged", lang), "request_adr": MONITOR_REMOVE, "request_data": None,
+                     "reason": msg("rb_monitor_nothing_to_remove", lang)})
+    return rows
+
+
 def execute_planned_request(ip, username, password, req, decision, lang):
     """Führt einen Request nur aus, wenn der Ist-Wert abweicht (oder nicht vergleichbar ist)."""
     base = {"current": decision.get("current"), "target": decision.get("target"), "decision": decision["decision"],
@@ -737,6 +830,8 @@ def execute_planned_request(ip, username, password, req, decision, lang):
     if decision["decision"] == "skip":
         return [public_request({"path": req["label"] + " → " + req["adr"], "value": req.get("data"), "code": 200, "skipped": True,
                                 "status": msg("status_unchanged", lang), "request_adr": req["adr"], "request_data": req.get("data"), **base})]
+    if req["adr"] == MONITOR_REMOVE_UNLISTED:
+        return remove_unlisted_monitor_items(ip, username, password, req, lang)
     rows = execute_config_request(ip, username, password, req)
     rows[-1].update(base)
     return rows
@@ -770,7 +865,7 @@ def apply_config():
         if precheck_error:
             return jsonify({"ok": False, "error": precheck_error, "results": results}), 412
         compiled_requests = compile_requests(config)
-        regular_requests = [req for req in compiled_requests if req.get("section") != "network"]
+        regular_requests = bind_monitor_requests([req for req in compiled_requests if req.get("section") != "network"], body.get("_hostname"))
         network_requests = [req for req in compiled_requests if req.get("section") == "network"]
         planned = plan_requests(make_reader(ip, username, active), regular_requests + network_requests)
         decisions = [d for _, d in planned]
@@ -786,7 +881,10 @@ def apply_config():
             results.extend(execute_planned_request(ip, username, active, req, decision, lang))
         has_error = any(not r.get("warning") and not is_success_code(r.get("code", ""), r.get("request_adr")) for r in results)
         has_warning = any(r.get("warning") for r in results)
-        return jsonify({"ok": not has_error, "warning": has_warning, "message": msg("config_done_with_warning", lang) if has_warning and not has_error else msg("config_done", lang), "results": results})
+        message = msg("config_done_with_warning", lang) if has_warning and not has_error else msg("config_done", lang)
+        if needs_reboot(results):
+            message += " " + msg("reboot_required", lang)
+        return jsonify({"ok": not has_error, "warning": has_warning, "reboot": needs_reboot(results), "message": message, "results": results})
     except Exception as exc: return jsonify({"ok": False, "error": error_text(exc, get_lang()), "results": results}), 500
 
 
@@ -813,7 +911,7 @@ def apply_config_stream():
             if precheck_error:
                 yield ndjson({"type": "done", "ok": False, "error": precheck_error, "results": results}); return
             compiled_requests = compile_requests(config)
-            regular_requests = [req for req in compiled_requests if req.get("section") != "network"]
+            regular_requests = bind_monitor_requests([req for req in compiled_requests if req.get("section") != "network"], body.get("_hostname"))
             network_requests = [req for req in compiled_requests if req.get("section") == "network"]
             total = len(compiled_requests) + len(iodd_files) + len(palette_files) + (1 if flow_files else 0)
 
@@ -828,7 +926,7 @@ def apply_config_stream():
                 yield ndjson({"type": "step_start", "index": index, "total": total, "path": label + " → " + adr, "message": msg("request_running", lang, index=index, total=total, label=label)})
                 for row in execute_planned_request(ip, username, active, req, decision, lang):
                     if not row.get("skipped"):
-                        row["status"] = msg("status_ok", lang) if is_success_code(row.get("code"), row.get("request_adr")) else msg("status_error", lang)
+                        row["status"] = row_status(row, lang)
                     row.update({"type": "row", "index": index, "total": total}); results.append(row); yield ndjson(row)
             for offset, item in enumerate(iodd_files, start=1):
                 index = len(regular_requests) + offset; filename, _, _ = iodd_details(item); path = "IODD → " + filename
@@ -885,7 +983,7 @@ def apply_config_stream():
                 })
                 for row in execute_planned_request(ip, username, active, req, decision, lang):
                     if not row.get("skipped"):
-                        row["status"] = msg("status_ok", lang) if is_success_code(row.get("code"), row.get("request_adr")) else msg("status_error", lang)
+                        row["status"] = row_status(row, lang)
                     row.update({"type": "row", "index": index, "total": total})
                     results.append(row)
                     yield ndjson(row)
@@ -893,9 +991,122 @@ def apply_config_stream():
             has_error = any(not r.get("warning") and not is_success_code(r.get("code", ""), r.get("request_adr")) for r in results if r.get("type") == "row")
             has_warning = any(r.get("warning") for r in results if r.get("type") == "row")
             final_message = msg("config_done_with_error", lang) if has_error else (msg("config_done_with_warning", lang) if has_warning else msg("config_done", lang))
-            yield ndjson({"type": "done", "ok": not has_error, "warning": has_warning, "message": final_message, "results": results})
+            reboot = needs_reboot([r for r in results if r.get("type") == "row"])
+            if reboot:
+                final_message += " " + msg("reboot_required", lang)
+            yield ndjson({"type": "done", "ok": not has_error, "warning": has_warning or reboot, "reboot": reboot, "message": final_message, "results": results})
         except Exception as exc: yield ndjson({"type": "done", "ok": False, "error": error_text(exc, get_lang()), "results": results})
     response = Response(generate(), mimetype="application/x-ndjson"); response.headers["Cache-Control"] = "no-cache, no-transform"; response.headers["X-Accel-Buffering"] = "no"; return response
+
+
+# ---------------------------------------------------------------------------
+# Geräte-Backup: alle Einstellungen lesen, die ein Parametersatz enthalten kann,
+# als Profil (wiederherstellbar) und als Rohdatei (backups/<name>_raw.json) speichern.
+# ---------------------------------------------------------------------------
+def backup_default_name(identity):
+    device = identity.get("serial") or identity.get("hostname") or "device"
+    return safe_name(f"backup_{device}_{time.strftime('%Y-%m-%d_%H%M')}")
+
+
+def backup_precheck(ip, username, password, lang):
+    """Vorprüfung für das Backup. Im Werkszustand gibt es nichts zu sichern (alles außer
+    /getidentity antwortet 401); deshalb wird dort abgebrochen."""
+    pre = device_precheck(ip, username, password, lang=lang)
+    if pre.get("factory_state"):
+        return pre, msg("backup_factory", lang)
+    if not pre["ok"] or pre["mode"] != "normal_auth":
+        return pre, precheck_summary(pre, lang)
+    return pre, None
+
+
+def backup_text(value, lang):
+    """Anzeigenamen mit "@" sind Textschlüssel aus messages.py."""
+    value = str(value or "")
+    return msg(value[1:], lang) if value.startswith("@") else value
+
+
+def backup_row(row, lang):
+    label = backup_text(row["label"], lang)
+    return {"type": "row", "state": row["state"], "section": msg("bk_sec_" + row["section"], lang),
+            "path": label + (" → " + row["adr"] if row.get("adr") else ""), "value": row.get("value"),
+            "code": row.get("code") if row.get("code") is not None else "",
+            "status": msg("bk_state_" + row["state"], lang), "reason": msg("bk_note_" + row["note"], lang) if row.get("note") else ""}
+
+
+@app.route("/backup/connect", methods=["POST"])
+def backup_connect():
+    lang = get_lang()
+    try:
+        body = request.json or {}; ip = normalize_device_url(body.get("ip")); username = body.get("username") or "admin"
+        pre, error = backup_precheck(ip, username, body.get("password") or "", lang)
+        message = error or precheck_summary(pre, lang)
+        return jsonify({"ok": not error, "message": message, "error": error, "precheck": pre,
+                        "default_name": backup_default_name(pre.get("identity") or {}) if not error else ""})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": error_text(exc, lang)}), 500
+
+
+@app.route("/backup/create_stream", methods=["POST"])
+def backup_create_stream():
+    lang = get_lang(); body = request.get_json(silent=True) or {}
+    def ndjson(obj): return json.dumps(obj, ensure_ascii=False) + "\n"
+    @stream_with_context
+    def generate():
+        try:
+            ip = normalize_device_url(body.get("ip")); username = body.get("username") or "admin"; password = body.get("password") or ""
+            yield ndjson({"type": "status", "message": msg("backup_precheck_running", lang)})
+            pre, error = backup_precheck(ip, username, password, lang)
+            for row in precheck_rows(pre):
+                yield ndjson(dict(row, type="row", section=msg("pc_prefix", lang)))
+            identity = pre.get("identity") or {}
+            expected = str(body.get("expected_serial") or "").strip()
+            if not error and expected and identity.get("serial") and expected != identity["serial"]:
+                error = msg("precheck_device_changed", lang, expected=expected, found=identity["serial"])
+            if error:
+                yield ndjson({"type": "done", "ok": False, "error": error}); return
+            name = safe_name(body.get("name"), backup_default_name(identity))
+            if (PROFILE_DIR / f"{name}.json").exists() and not body.get("overwrite"):
+                yield ndjson({"type": "done", "ok": False, "exists": True, "name": name, "error": msg("profile_exists", lang, name=name)}); return
+
+            yield ndjson({"type": "status", "message": msg("backup_reading", lang)})
+            reader = make_reader(ip, username, password)
+            flows_fn = (lambda: read_node_red_flows(ip, username, password)) if body.get("include_flows") else None
+            modules_fn = lambda: BACKUP.user_modules(read_node_red_nodes(ip, username, password))
+            job = BACKUP.DeviceBackup(reader, name, flows_fn=flows_fn, modules_fn=modules_fn)
+            rows = []
+            for row in job.rows():
+                rows.append(row)
+                yield ndjson(backup_row(row, lang))
+
+            yield ndjson({"type": "status", "message": msg("backup_saving", lang)})
+            profile = migrate_profile(job.profile)
+            write_profile(profile)
+            counts = BACKUP.summary(rows)
+            raw = {"tool": "AL15 Quick-Setup-Tool", "tool_version": APP_VERSION, "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                   "host": ip, "identity": identity, "profile": name, "include_flows": bool(flows_fn), "summary": counts,
+                   "node_red_modules": job.extra["node_red_modules"], "node_red_flow_nodes": job.extra["node_red_flows_nodes"],
+                   "rows": rows, "reads": reader.entries()}
+            raw_file = BACKUP_DIR / f"{name}_raw.json"
+            raw_file.write_text(json.dumps(raw, indent=2, ensure_ascii=False), encoding="utf-8")
+            yield ndjson({"type": "done", "ok": True, "name": name, "raw_file": raw_file.name, "summary": counts,
+                          "message": msg("backup_done", lang, name=name, **counts)})
+        except Exception as exc:
+            yield ndjson({"type": "done", "ok": False, "error": error_text(exc, lang)})
+    response = Response(generate(), mimetype="application/x-ndjson"); response.headers["Cache-Control"] = "no-cache, no-transform"; response.headers["X-Accel-Buffering"] = "no"; return response
+
+
+@app.route("/backup/download/<name>", methods=["GET"])
+def backup_download(name):
+    """kind=raw: Rohdatei aus backups/, kind=profile: Profil aus profiles/."""
+    from flask import send_from_directory
+    name = safe_name(name)
+    if request.args.get("kind") == "profile":
+        folder, filename = PROFILE_DIR, f"{name}.json"
+    else:
+        folder, filename = BACKUP_DIR, f"{name}_raw.json"
+    if not (folder / filename).exists():
+        return jsonify({"ok": False, "error": msg("backup_file_missing", get_lang())}), 404
+    return send_from_directory(folder, filename, as_attachment=True)
 
 
 def load_prebuilt_palette_index():

@@ -24,6 +24,7 @@ Folders
 profiles  saved parameter sets (JSON, not encrypted)
 exports   generated request lists and assets per parameter set
 palettes  Node-RED palettes created with the palette packager
+backups   raw data of device backups (JSON, all values read from the device)
 
 Requirements
 Windows 10/11, AL159x with firmware 1.7 or later.

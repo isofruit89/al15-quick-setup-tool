@@ -261,6 +261,30 @@ def publish_node_red_flows(master_url, username, password, profile):
     return {"code": response.status_code, "http_status": response.status_code, "message": detail}
 
 
+def _read_node_red(master_url, username, password, path):
+    """GET auf die Node-RED-Admin-API (mit Token, falls Zugangsdaten vorhanden)."""
+    base_url = node_red_base_url(master_url)
+    token = None
+    try:
+        token = get_node_red_token(base_url, username, password)
+    except Exception:
+        pass
+    headers = {"Accept": "application/json", **_api_headers(token)}
+    response = requests.get(base_url.rstrip("/") + path, headers=headers, timeout=NODERED_TIMEOUT, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+
+def read_node_red_flows(master_url, username, password):
+    """Aktive Flows (Geräte-Backup). Antwort v2: {"rev", "flows": [...]}."""
+    return _read_node_red(master_url, username, password, "/flows")
+
+
+def read_node_red_nodes(master_url, username, password):
+    """Installierte Node-Module (GET /nodes, Geräte-Backup)."""
+    return _read_node_red(master_url, username, password, "/nodes")
+
+
 def build_flow_preview(profile, master_url=None):
     files = validate_flow_files(profile)
     if not files:

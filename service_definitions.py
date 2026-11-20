@@ -116,8 +116,25 @@ def build_auth_enabled_requests(data: dict) -> List[RequestDef]:
                        label='Credentials ein' if enabled else 'Credentials aus')]
 
 
+def _port_or_skip(value, error_key):
+    port = _int_or_skip(value)
+    if port is not None and not 1 <= port <= 65535:
+        raise LocalizedError(error_key)
+    return port
+
+
+def _enum_or_skip(value, allowed, error_key):
+    number = _int_or_skip(value)
+    if number is not None and number not in allowed:
+        raise LocalizedError(error_key)
+    return number
+
+
 def build_http_requests(data: dict) -> List[RequestDef]:
     reqs = []
+    port = _port_or_skip(data.get('port'), "http_port")
+    if port is not None:
+        reqs.append(RequestDef('/connections/httpserver0/httpserver/port/setdata', {'newvalue': port}, label='HTTP Port'))
     # Backwards compatibility: old profiles used {'enabled': true/false}.
     action = (data.get('action') or '').lower().strip()
     if not action:
@@ -136,10 +153,118 @@ def build_http_requests(data: dict) -> List[RequestDef]:
             label='HTTP Stop'
         ))
     elif action in ('none', ''):
-        return []
+        return reqs
     else:
         raise LocalizedError("http_action")
     return reqs
+
+# ---------------------------------------------------------------------------
+# Zertifikat + Private Key als PEM-Text (certificate_key_pem): HTTPS-Server und MQTT-Client-Zertifikate.
+# Format laut Web-UI des AL1590 (am Gerät verifiziert 2026-11-20):
+#   setdata {"newvalue": {"certificate": PEM, "key": PEM[, "password": Passwort des Keys]}} -> 230 (Neustart nötig)
+#   getdata liefert das Zertifikat zurück, key und password immer null. Löschen ist nicht möglich.
+# Der HTTPS-Server verlangt Extended Key Usage "TLS Server" (OID 1.3.6.1.5.5.7.3.1), sonst 422.
+# ---------------------------------------------------------------------------
+CERT_KEY_PEM_SUFFIX = '/securesetup/certificate_key_pem/setdata'
+PEM_KEY_RE = re.compile(r'-----BEGIN ((?:RSA |EC |ENCRYPTED )?PRIVATE KEY)-----[\s\S]*?-----END \1-----')
+PEM_CERT_MAX_BYTES = 64 * 1024
+EKU_TLS_SERVER = bytes.fromhex('06082b06010505070301')
+
+
+def _pem_text(value):
+    return str(value or '').replace('\r\n', '\n').replace('\r', '\n').strip()
+
+
+def build_certificate_key_pem(entry, context: str, require_server_auth: bool = False) -> Optional[Dict[str, Any]]:
+    """Profilwert {"certificate": {name, pem}, "private_key": {name, pem}, "password"} -> setdata-Wert."""
+    if entry in (None, {}):
+        return None
+    if not isinstance(entry, dict):
+        raise LocalizedError("pem_pair_entry", context=context)
+    cert = _pem_text((entry.get('certificate') or {}).get('pem'))
+    key = _pem_text((entry.get('private_key') or {}).get('pem'))
+    if not cert:
+        raise LocalizedError("pem_pair_cert_missing", context=context)
+    if not key:
+        raise LocalizedError("pem_pair_key_missing", context=context)
+    if len(cert) > PEM_CERT_MAX_BYTES or len(key) > PEM_CERT_MAX_BYTES:
+        raise LocalizedError("pem_pair_size", context=context)
+    blocks = PEM_CERT_RE.findall(cert)
+    if not blocks:
+        raise LocalizedError("pem_pair_cert_invalid", context=context)
+    key_match = PEM_KEY_RE.search(key)
+    if not key_match:
+        raise LocalizedError("pem_pair_key_invalid", context=context)
+    password = entry.get('password') or None
+    if key_match.group(1) == 'ENCRYPTED PRIVATE KEY' and not password:
+        raise LocalizedError("pem_pair_key_password", context=context)
+    if require_server_auth:
+        try:
+            der = base64.b64decode(''.join(blocks[0].split()))
+        except Exception as exc:
+            raise LocalizedError("pem_pair_cert_invalid", context=context) from exc
+        if EKU_TLS_SERVER not in der:
+            raise LocalizedError("https_cert_eku")
+    value = {'certificate': cert, 'key': key}
+    if password:
+        value['password'] = str(password)
+    return value
+
+
+def pem_certificate_list(value) -> Optional[List[str]]:
+    """Liste einzelner PEM-Zertifikate (HTTPS Trusted Client Certificates). Leer -> None."""
+    if value in (None, '', []):
+        return None
+    text = '\n'.join(value) if isinstance(value, list) else str(value)
+    blocks = [_pem_text(m.group(0)) for m in PEM_CERT_RE.finditer(normalize_certificate_text(text))]
+    if not blocks:
+        raise LocalizedError("https_trusted_pem")
+    return blocks
+
+
+def build_https_requests(data: dict) -> List[RequestDef]:
+    """HTTPS-Server (httpserver1). Änderungen meldet das Gerät mit 230 (wirksam nach Neustart).
+    validateclientcertificate = 1 sperrt Clients ohne Zertifikat aus (auch dieses Tool); deshalb zuletzt."""
+    reqs = []
+    base = '/connections/httpserver1/httpserver'
+    port = _port_or_skip(data.get('port'), "https_port")
+    if port is not None:
+        reqs.append(RequestDef(f'{base}/port/setdata', {'newvalue': port}, label='HTTPS Port'))
+    secure = _enum_or_skip(data.get('secure'), (0, 1), "https_secure")
+    if secure is not None:
+        reqs.append(RequestDef(f'{base}/securesetup/secure/setdata', {'newvalue': secure}, label='HTTPS Security'))
+    cert = build_certificate_key_pem(data.get('certificate'), 'HTTPS', require_server_auth=True)
+    if cert:
+        reqs.append(RequestDef(f'{base}/securesetup/certificate_key_pem/setdata', {'newvalue': cert}, label='HTTPS Zertifikat'))
+    trusted = pem_certificate_list(data.get('trustedclientcertificates'))
+    if trusted:
+        reqs.append(RequestDef(f'{base}/securesetup/trustedclientcertificates/setdata', {'newvalue': trusted},
+                               label='HTTPS Trusted Client Certificates'))
+    validate = _enum_or_skip(data.get('validate_client_certificate'), (0, 1), "https_validate")
+    if validate is not None:
+        reqs.append(RequestDef(f'{base}/securesetup/validateclientcertificate/setdata', {'newvalue': validate},
+                               label='HTTPS Validate Client Certificate'))
+    return reqs
+
+
+def _mqtt_common_requests(data: dict, base: str, prefix: str, with_retain: bool) -> List[RequestDef]:
+    """MQTT-Version, Keep Alive, Last Will (und Retain beim MQTT Client)."""
+    reqs = []
+    version = _enum_or_skip(data.get('version'), (0, 1, 2), "mqtt_version")
+    if version is not None:
+        reqs.append(RequestDef(f'{base}/version/setdata', {'newvalue': version}, label=f'{prefix} Version'))
+    keepalive = _int_or_skip(data.get('keepalive'))
+    if keepalive is not None:
+        if not 0 <= keepalive <= 65535:
+            raise LocalizedError("mqtt_keepalive")
+        reqs.append(RequestDef(f'{base}/keepalive/setdata', {'newvalue': keepalive}, label=f'{prefix} Keep Alive'))
+    for key, label in (('willtopic', 'Will Topic'), ('willmessage', 'Will Message')):
+        if _set(data.get(key)):
+            reqs.append(RequestDef(f'{base}/{key}/setdata', {'newvalue': str(data[key])}, label=f'{prefix} {label}'))
+    if with_retain and _set(data.get('retain')):
+        reqs.append(RequestDef(f'{base}/retain/setdata', {'newvalue': bool(data['retain'])}, label=f'{prefix} Retain'))
+    return reqs
+
 
 OPCUA_CERT_ADR = '/connections/opcua_server/upload_certificate'
 OPCUA_CERT_MAX_BYTES = 64 * 1024
@@ -330,6 +455,7 @@ def normalize_mqtt_trusted_server_certificates(value):
 def build_mqtt_client_requests(data: dict) -> List[RequestDef]:
     reqs = []
     base = '/connections/mqttclient/mqttsetup'
+    reqs.extend(_mqtt_common_requests(data, base, 'MQTT', with_retain=True))
     qos = _int_or_skip(data.get('qos'))
     if qos is not None:
         reqs.append(RequestDef(f'{base}/qos/setdata', {'newvalue': qos}, label='MQTT QoS'))
@@ -341,6 +467,9 @@ def build_mqtt_client_requests(data: dict) -> List[RequestDef]:
     certs = normalize_mqtt_trusted_server_certificates(data.get('trustedservercertificates'))
     if certs:
         reqs.append(RequestDef(f'{base}/securesetup/trustedservercertificates/setdata', {'newvalue': certs}, label='MQTT Trusted Server Certificates'))
+    client_cert = build_certificate_key_pem(data.get('client_certificate'), 'MQTT Client')
+    if client_cert:
+        reqs.append(RequestDef(f'{base}{CERT_KEY_PEM_SUFFIX}', {'newvalue': client_cert}, label='MQTT Client-Zertifikat'))
 
     action = data.get('action')
     if action == 'start':
@@ -353,6 +482,7 @@ def build_mqtt_client_requests(data: dict) -> List[RequestDef]:
 def build_mqtt_command_channel_requests(data: dict) -> List[RequestDef]:
     reqs = []
     base = '/connections/mqttcommandchannel/mqttcmdchannel/mqttcmdchannelsetup'
+    reqs.extend(_mqtt_common_requests(data, base, 'MQTTCC', with_retain=False))
     fields = (
         ('brokerip', 'brokerip', str, 'MQTTCC Broker'),
         ('brokerport', 'brokerport', int, 'MQTTCC Broker Port'),
@@ -373,6 +503,9 @@ def build_mqtt_command_channel_requests(data: dict) -> List[RequestDef]:
     certs = normalize_mqtt_trusted_server_certificates(data.get('trustedservercertificates'))
     if certs:
         reqs.append(RequestDef(f'{base}/securesetup/trustedservercertificates/setdata', {'newvalue': certs}, label='MQTTCC Trusted Server Certificates'))
+    client_cert = build_certificate_key_pem(data.get('client_certificate'), 'MQTT Command Channel')
+    if client_cert:
+        reqs.append(RequestDef(f'{base}{CERT_KEY_PEM_SUFFIX}', {'newvalue': client_cert}, label='MQTTCC Client-Zertifikat'))
     if _set(data.get('user')):
         reqs.append(RequestDef(f'{base}/user/setdata', {'newvalue': str(data['user'])}, label='MQTTCC User'))
     if _set(data.get('password')):
@@ -405,4 +538,181 @@ def build_port_configuration_requests(data: dict) -> List[RequestDef]:
             reqs.append(RequestDef(f'/iolinkmaster/port[{port}]/powercontrol/mode_ua/setdata', {'newvalue': pin2}, label=f'Port {port} Pin 2'))
     return reqs
 
+
+# ---------------------------------------------------------------------------
+# Service Monitor (/monitor): zyklische MQTT/MQTTS-Meldungen von Datenpunkten.
+# Am AL1590 verifiziert (2026-11-20):
+#   /monitor/add {id?, data_points, sample_interval, notify_interval, recipient, data_changed?, sample_condition?,
+#                 description?, persist?} -> 200 {id}. Gleiche id ersetzt den Eintrag, ohne id vergibt das Gerät eine.
+#   /monitor/remove {id} -> 200; unbekannte id -> 422.  /monitor/getitems -> {items: [...]} (Zugangsdaten im Klartext).
+# Datenpunkte stehen im Profil ohne Gerätenamen ("/devicestatus/..."); beim Übertragen setzt das Tool den Namen
+# des Zielgeräts davor (so wie die Web-UI sie anlegt: "ifm-AL1590-<SN>/devicestatus/...").
+# Start/Stop des Monitors ist bewusst nicht Teil des Tools.
+# ---------------------------------------------------------------------------
+MONITOR_ADD = '/monitor/add'
+MONITOR_REMOVE = '/monitor/remove'
+MONITOR_GETITEMS = '/monitor/getitems'
+MONITOR_REMOVE_UNLISTED = '/monitor/remove_unlisted'  # interner Schritt: wird über /monitor/remove ausgeführt
+MONITOR_SCHEMES = ('mqtt', 'mqtts')
+MONITOR_DEFAULT_PORTS = {'mqtt': 1883, 'mqtts': 8883}
+RECIPIENT_RE = re.compile(r'^(mqtts?)://(?:([^:@/]*)(?::([^@/]*))?@)?([^:/@]+)(?::(\d+))?/(.*)$', re.IGNORECASE)
+
+
+def relative_data_point(path) -> str:
+    """'ifm-AL1590-.../devicestatus/x' -> '/devicestatus/x'; relative Pfade bleiben unverändert."""
+    path = str(path or '').strip()
+    if not path or path.startswith('/'):
+        return path
+    return '/' + path.split('/', 1)[1] if '/' in path else path
+
+
+def bind_data_point(path, hostname: str) -> str:
+    rel = relative_data_point(path)
+    return f'{hostname}{rel}' if hostname and rel.startswith('/') else rel
+
+
+def mask_recipient(url) -> str:
+    return re.sub(r'(://[^:/@]*:)[^@/]*@', r'\1***@', str(url or ''))
+
+
+def parse_monitor_recipient(url) -> Dict[str, Any]:
+    match = RECIPIENT_RE.match(str(url or '').strip())
+    if not match:
+        return {'scheme': None, 'host': None, 'port': None, 'topic': None, 'user': None, 'password': None, 'raw': str(url or '')}
+    scheme, user, password, host, port, topic = match.groups()
+    return {'scheme': scheme.lower(), 'host': host, 'port': int(port) if port else None, 'topic': topic,
+            'user': user or None, 'password': password if password not in (None, '') else None}
+
+
+def monitor_recipient_url(recipient, label: str) -> str:
+    if not isinstance(recipient, dict):
+        raise LocalizedError("monitor_recipient", item=label)
+    if recipient.get('raw') and not recipient.get('host'):
+        return str(recipient['raw'])  # vom Gerät gelesen, aber nicht zerlegbar: unverändert übernehmen
+    scheme = str(recipient.get('scheme') or 'mqtt').lower()
+    if scheme not in MONITOR_SCHEMES:
+        raise LocalizedError("monitor_scheme", item=label)
+    host = str(recipient.get('host') or '').strip()
+    topic = str(recipient.get('topic') or '').strip().lstrip('/')
+    if not host or any(ch in host for ch in ':/@ '):
+        raise LocalizedError("monitor_host", item=label)
+    if not topic:
+        raise LocalizedError("monitor_topic", item=label)
+    port = _int_or_skip(recipient.get('port')) or MONITOR_DEFAULT_PORTS[scheme]
+    if not 1 <= port <= 65535:
+        raise LocalizedError("monitor_port", item=label)
+    user, password = str(recipient.get('user') or ''), str(recipient.get('password') or '')
+    if any(ch in user + password for ch in ':/@'):
+        raise LocalizedError("monitor_credentials", item=label)
+    auth = f'{user}:{password}@' if user or password else ''
+    return f'{scheme}://{auth}{host}:{port}/{topic}'
+
+
+def monitor_item_payload(item, index: int) -> Dict[str, Any]:
+    label = str(item.get('id') or f'#{index}') if isinstance(item, dict) else f'#{index}'
+    if not isinstance(item, dict):
+        raise LocalizedError("monitor_item", item=label)
+    points = item.get('data_points')
+    if isinstance(points, str):
+        points = [x.strip() for x in re.split(r'[\n,]', points) if x.strip()]
+    points = [relative_data_point(p) for p in (points or []) if str(p).strip()]
+    if not points:
+        raise LocalizedError("monitor_datapoints", item=label)
+    payload: Dict[str, Any] = {'data_points': points}
+    for key in ('sample_interval', 'notify_interval'):
+        value = _int_or_skip(item.get(key))
+        if value is None or value < 1:
+            raise LocalizedError("monitor_interval", item=label)
+        payload[key] = value
+    payload['recipient'] = monitor_recipient_url(item.get('recipient'), label)
+    payload['data_changed'] = bool(item.get('data_changed'))
+    payload['persist'] = item.get('persist') is not False
+    if str(item.get('sample_condition') or '').strip():
+        payload['sample_condition'] = relative_data_point(item['sample_condition'])
+    if str(item.get('description') or '').strip():
+        payload['description'] = str(item['description']).strip()
+    item_id = _int_or_skip(item.get('id'))
+    if item_id is not None:
+        if item_id < 1:
+            raise LocalizedError("monitor_id", item=label)
+        payload['id'] = item_id
+    return payload
+
+
+def build_monitor_requests(data: dict) -> List[RequestDef]:
+    items = data.get('items') or []
+    if not isinstance(items, list):
+        raise LocalizedError("monitor_items_list")
+    reqs, seen = [], set()
+    for index, item in enumerate(items, start=1):
+        payload = monitor_item_payload(item, index)
+        if 'id' in payload:
+            if payload['id'] in seen:
+                raise LocalizedError("monitor_id_duplicate", id=payload['id'])
+            seen.add(payload['id'])
+        label = f"Service Monitor ID {payload['id']}" if 'id' in payload else f'Service Monitor (neu {index})'
+        reqs.append(RequestDef(MONITOR_ADD, payload, label=label))
+    if data.get('remove_unlisted'):
+        keep = [dict(r.data) for r in reqs]
+        reqs.append(RequestDef(MONITOR_REMOVE_UNLISTED, {'keep': keep}, label='Service Monitor: nicht enthaltene Einträge entfernen'))
+    return reqs
+
+
+def normalize_monitor_item(item) -> Dict[str, Any]:
+    """Vergleichsform eines Monitor-Eintrags (Gerät oder Profil): ohne Gerätenamen, ohne id und description."""
+    item = item or {}
+    return {'data_points': [relative_data_point(p) for p in item.get('data_points') or []],
+            'sample_interval': _int_or_skip(item.get('sample_interval')), 'notify_interval': _int_or_skip(item.get('notify_interval')),
+            'data_changed': bool(item.get('data_changed')), 'persist': item.get('persist') is not False,
+            'sample_condition': relative_data_point(item.get('sample_condition')) or None,
+            'recipient': str(item.get('recipient') or '')}
+
+
+def public_monitor_item(item) -> Dict[str, Any]:
+    out = dict(item or {})
+    if 'recipient' in out:
+        out['recipient'] = mask_recipient(out['recipient'])
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Hostname (/network/br0/hostname). Live geprüft am AL1590 FW 1.7.0.2 (2026-11-20).
+# ---------------------------------------------------------------------------
+HOSTNAME_ADR = '/network/br0/hostname'
+# Live geprüft: max. 63 Zeichen, Buchstaben/Ziffern/Bindestrich/Punkt; Beginn mit Buchstabe,
+# kein Bindestrich am Ende eines Abschnitts, kein Punkt am Ende ("1abc", "abc_d", "a-.b", "a." -> 422).
+HOSTNAME_RE = re.compile(r'^(?=.{1,63}$)[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*$')
+
+
+def build_hostname_requests(data: dict) -> List[RequestDef]:
+    value = data.get('hostname')
+    if value is None or not str(value).strip():
+        return []
+    value = str(value).strip()
+    if not HOSTNAME_RE.match(value):
+        raise LocalizedError("hostname_invalid", value=value)
+    return [RequestDef(f'{HOSTNAME_ADR}/setdata', {'newvalue': value}, label='Hostname')]
+
+
+# ---------------------------------------------------------------------------
+# Feldbus-Umschaltung PROFINET / EtherNet/IP (/devicesettings/fieldbustype).
+# Live geprüft am AL1590 FW 1.7.0.2 (2026-11-20): status 0 = Profinet, 2 = EtherNet/IP (Werkszustand 2).
+# Umschalten per <Typ>/enable ohne Daten; der Aufruf blockiert ca. 60 s und antwortet dann mit 200.
+# Ist der Typ schon aktiv, antwortet das Gerät sofort. Kein Neustart nötig.
+# ---------------------------------------------------------------------------
+FIELDBUS_TYPE_STATUS = '/devicesettings/fieldbustype/status'
+FIELDBUS_TYPES = {0: ('PROFINET', '/devicesettings/fieldbustype/Profinet/enable'),
+                  2: ('EtherNet/IP', '/devicesettings/fieldbustype/EtherNetIP/enable')}
+FIELDBUS_ENABLE = {adr: value for value, (_, adr) in FIELDBUS_TYPES.items()}
+FIELDBUS_SWITCH_TIMEOUT = 180
+
+
+def build_fieldbus_type_requests(data: dict) -> List[RequestDef]:
+    value = _int_or_skip(data.get('type'))
+    if value is None:
+        return []
+    if value not in FIELDBUS_TYPES:
+        raise LocalizedError("fieldbus_type")
+    name, adr = FIELDBUS_TYPES[value]
+    return [RequestDef(adr, None, label=f'Fieldbus {name}')]
 

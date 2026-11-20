@@ -1,7 +1,7 @@
 @echo off
 rem Baut die EXE mit PyInstaller und erstellt das Release-ZIP.
 rem Ergebnis: dist\AL15 Quick Setup Tool v<Version>\ und dist\AL15-Quick-Setup-Tool-v<Version>.zip
-rem Die Ordner profiles, exports und palettes legt das Tool beim ersten Start selbst an.
+rem Die Ordner profiles, exports, palettes und backups legt das Tool beim ersten Start selbst an.
 setlocal
 cd /d %~dp0
 

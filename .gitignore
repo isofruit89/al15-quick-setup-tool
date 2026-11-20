@@ -11,6 +11,7 @@ dist/
 profiles/
 exports/
 palettes/
+backups/
 
 # Lokale Sicherungen und Werkzeuge
 _backup/

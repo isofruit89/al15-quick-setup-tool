@@ -23,15 +23,19 @@ Keine Installation nötig. Zum Beenden `AL15-Quick-Setup-Tool.exe` im Task-Manag
 
 ## Funktionen
 
-- **Parametersatz erstellen:** Device Tags, Netzwerk (DHCP/statisch), Portkonfiguration, NTP, Node-RED,
-  Credentials, HTTP, OPC UA (inkl. Serverzertifikat), MQTT Client, MQTT Command Channel, IODDs,
+- **Parametersatz erstellen:** Device Tags, Hostname, Netzwerk (DHCP/statisch), Portkonfiguration, Feldbus (PROFINET/EtherNet/IP), NTP, Node-RED,
+  Credentials, HTTP, HTTPS (Port, Security, Serverzertifikat, Client-Zertifikate), OPC UA (inkl. Serverzertifikat),
+  MQTT Client und MQTT Command Channel (inkl. Version, Keep Alive, Last Will, Client-Zertifikat), Service Monitor
+  (MQTT/MQTTS-Meldungen), IODDs,
   Node-RED-Flows und -Paletten.
-- **„Keine Aktion“** pro Bereich und pro Parameter: Es wird nur gesendet, was ausdrücklich gesetzt ist.
+- **Werkseinstellungen als Vorbelegung** und **„Keine Aktion“ pro Bereich**: Leere Felder werden nicht geschrieben.
 - **Vorprüfung vor dem Übertragen:** Erreichbarkeit, Werkszustand (`/getidentity`, `passwordstatus`),
   Anmeldung, Produkt (AL159x), Firmware und Seriennummer. Im Werkszustand wird zuerst das Passwort gesetzt.
 - **Zurücklesen vor dem Schreiben:** Das Tool liest die Ist-Werte und sendet nur echte Änderungen.
   Der Dry Run zeigt Ist und Soll je Request.
 - **Profilverwaltung:** Profile laden, bearbeiten, kopieren, löschen.
+- **Geräte-Backup:** Liest alle Einstellungen, die ein Parametersatz enthalten kann, vom Gerät und speichert sie
+  als Profil (wiederherstellbar über „Parametersatz übertragen“) und als Rohdatei im Ordner `backups`.
 - **Paletten-Packager:** Node-RED-Paletten offline für den AL15 paketieren (benötigt Node.js und npm).
 
 Profile werden unverschlüsselt im Ordner `profiles` gespeichert. Passwörter und den OPC-UA-Private-Key
@@ -74,6 +78,7 @@ hochgeladen. Die Versionsnummer steht in `app.py` (`APP_VERSION`).
 | `service_definitions.py` | Erzeugt die IoT-Core-Requests aus einem Profil |
 | `profile_schema.py` | Profilschema v2 und Migration alter Profile |
 | `readback.py` | Ist-/Soll-Vergleich vor dem Schreiben |
+| `backup.py` | Geräte-Backup: Gerätewerte lesen und in ein Profil umwandeln |
 | `opcua_client.py` | Minimaler OPC-UA-Client zum Lesen des Serverzertifikats |
 | `nodered.py` | Node-RED: Paletten installieren, Flows deployen |
 | `palette_packager.py` | Offline-Paketierung von Node-RED-Paletten |
