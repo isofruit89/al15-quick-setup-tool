@@ -311,7 +311,9 @@ FACTORY_PASSWORD = "password"
 PRECHECK_TIMEOUT = (5, 15)  # (connect, read) in Sekunden
 PRODUCT_PATTERN = re.compile(r"^AL159\d$", re.IGNORECASE)
 MIN_FIRMWARE = (1, 7)
-REFERENCE_FIRMWARE = "1.7.0.2"
+# Verifizierte Firmware-Stände: 1.7.0.2 (Live-Tests 2026-11-19/20),
+# 1.8.0.1 (2026-11-27 rein lesend geprüft: alle Lesepfade, Backup-Rundlauf, GetTree).
+REFERENCE_FIRMWARE = ("1.7.0.2", "1.8.0.1")
 IDENTITY_PATHS = {
     "product": "/deviceinfo/productcode/getdata",
     "firmware": "/software/firmware/version/getdata",
@@ -383,8 +385,8 @@ def check_device_identity(ip, username, password, lang, result):
         fw = parse_firmware(firmware)
         if fw[:2] < MIN_FIRMWARE:
             _check(result, "firmware", "error", msg("precheck_firmware_too_old", lang, value=firmware, minimum=".".join(map(str, MIN_FIRMWARE))), lang, 412)
-        elif fw != parse_firmware(REFERENCE_FIRMWARE):
-            _check(result, "firmware", "warning", msg("precheck_firmware_unverified", lang, value=firmware, ref=REFERENCE_FIRMWARE), lang)
+        elif fw not in {parse_firmware(ref) for ref in REFERENCE_FIRMWARE}:
+            _check(result, "firmware", "warning", msg("precheck_firmware_unverified", lang, value=firmware, ref=" / ".join(REFERENCE_FIRMWARE)), lang)
         else:
             _check(result, "firmware", "ok", str(firmware), lang)
     if serial:

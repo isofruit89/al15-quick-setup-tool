@@ -128,6 +128,7 @@ Am 2026-11-20 am AL1590 geprüft.
 
 ### Vorprüfung
 
+- Firmware 1.8.0.1 gilt als verifiziert und erzeugt keine Warnung mehr (`REFERENCE_FIRMWARE` in `app.py` enthält jetzt 1.7.0.2 und 1.8.0.1). Am 2026-11-27 rein lesend am AL1590 geprüft: Alle Lesepfade antworten mit 200, der Backup-Rundlauf ergibt 0 Änderungen, und alle Schreibpfade des Tools stehen im GetTree. Schreiben unter 1.8.0.1 ist noch nicht live getestet.
 - Meldet das Gerät `passwordstatus = not_required` (Anmeldung deaktiviert), ist kein Passwort nötig. Das gilt für Backup und Übertragung.
 
 ### Wartbarkeit
